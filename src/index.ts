@@ -91,6 +91,15 @@ export const cursorACP: Plugin = async ({ client }) => {
       let stdout = "";
       let stderr = "";
 
+      // Setup error handling before processing
+      child.stderr.on("data", (data) => {
+        stderr += data.toString();
+      });
+
+      child.on("error", (err) => {
+        throw new Error(`Failed to spawn cursor-agent: ${err.message}`);
+      });
+
       // Handle streaming responses
       if (stream) {
         const encoder = new TextEncoder();
@@ -148,16 +157,13 @@ export const cursorACP: Plugin = async ({ client }) => {
         stdout = await new Response(child.stdout).text();
       }
 
-      child.stderr.on("data", (data) => {
-        stderr += data.toString();
-      });
-
-      const exitCode = await new Promise((resolve) => {
+      const exitCode = await new Promise<number>((resolve, reject) => {
         child.on("close", resolve);
+        child.on("error", reject);
       });
 
-      if (exitCode !== 0 && stderr) {
-        throw new Error(`cursor-agent failed: ${stderr}`);
+      if (exitCode !== 0) {
+        throw new Error(`cursor-agent exited with code ${exitCode}${stderr ? `: ${stderr}` : ""}`);
       }
 
       // Parse response for non-streaming
