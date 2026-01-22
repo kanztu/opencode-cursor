@@ -2,6 +2,10 @@
 
 A lightweight OpenCode plugin for Cursor Agent integration via stdin (fixes E2BIG errors).
 
+## Background
+
+[PR #5095](https://github.com/sst/opencode/pull/5095) by [@rinardmclern](https://github.com/rinardmclern) proposed native ACP support for OpenCode. The OpenCode maintainers decided not to merge it, so this plugin provides an alternative solution as a standalone tool.
+
 ## Problem Solved
 
 `opencode-cursor-auth` passes prompts as CLI arguments → causes `E2BIG: argument list too long` errors.
@@ -10,44 +14,66 @@ This plugin uses stdin/stdout to bypass argument length limits.
 
 ## Installation
 
+### Quick Install (Recommended)
+
 ```bash
-cd ~/.config/opencode/plugin
-ln -s /home/nomadx/opencode-cursor/src/cursor-acp.js cursor-acp.js
+git clone https://github.com/nomadcxx/opencode-cursor.git
+cd opencode-cursor
+./install.sh
 ```
 
-## Configuration
+The installer will:
+- Check prerequisites (bun, cursor-agent)
+- Build the TypeScript plugin
+- Create symlink to OpenCode plugin directory
+- Update opencode.json with cursor-acp provider
+- Validate the configuration
 
-Add to `~/.config/opencode/opencode.json`:
+### Manual Installation
 
-```json
-{
-  "provider": {
-    "cursor-acp": {
-      "npm": "@ai-sdk/openai-compatible",
-      "name": "Cursor Agent (ACP stdin)",
-      "options": {
-        "baseURL": "http://127.0.0.1:32123/v1"
-      }
-    }
-  }
-}
+```bash
+# Install dependencies and build
+bun install
+bun run build
+
+# Create plugin directory
+mkdir -p ~/.config/opencode/plugin
+
+# Symlink plugin
+ln -s $(pwd)/dist/index.js ~/.config/opencode/plugin/cursor-acp.js
+
+# Add to ~/.config/opencode/opencode.json:
+# {
+#   "provider": {
+#     "cursor-acp": {
+#       "npm": "@ai-sdk/openai-compatible",
+#       "name": "Cursor Agent (ACP stdin)",
+#       "options": {
+#         "baseURL": "http://127.0.0.1:32123/v1"
+#       }
+#     }
+#   }
+# }
 ```
 
 ## Usage
 
-OpenCode will automatically use this provider when configured.
+OpenCode will automatically use this provider when configured. Select `cursor-acp/auto` as your model.
 
 ## Features
 
 - ✅ Passes prompts via stdin (fixes E2BIG)
-- ✅ Full streaming support
+- ✅ Full streaming support with proper buffering
 - ✅ Tool calling support
 - ✅ Minimal complexity (~200 lines)
-- ✅ No custom HTTP proxy layer
+- ✅ TUI installer with animated terminal art
+- ✅ Pre/post install validation
 
-## Why Not PR #5095?
+## Prerequisites
 
-PR #5095 exists but hasn't merged. This is a lightweight alternative until native ACP support lands.
+- [Bun](https://bun.sh/) - JavaScript runtime
+- [cursor-agent](https://cursor.com/) - Cursor CLI tool
+- [Go 1.21+](https://golang.org/) - For building installer
 
 ## Development
 
@@ -55,11 +81,14 @@ PR #5095 exists but hasn't merged. This is a lightweight alternative until nativ
 # Install dependencies
 bun install
 
-# Build
+# Build plugin
 bun run build
 
 # Watch mode
 bun run dev
+
+# Run installer in debug mode
+./install.sh --debug
 ```
 
 ## License
