@@ -199,6 +199,94 @@ func verifyPlugin(m *model) error {
 	return nil
 }
 
+// Uninstall functions
+func (m model) startUninstallation() (tea.Model, tea.Cmd) {
+	m.step = stepUninstalling
+	m.isUninstall = true
+
+	m.tasks = []installTask{
+		{name: "Remove plugin symlink", description: "Removing cursor-acp.js from plugin directory", execute: removeSymlink, status: statusPending},
+		{name: "Remove provider config", description: "Removing cursor-acp from opencode.json", execute: removeProviderConfig, status: statusPending},
+		{name: "Validate config", description: "Checking JSON syntax", execute: validateConfigAfterUninstall, status: statusPending},
+	}
+
+	m.currentTaskIndex = 0
+	m.tasks[0].status = statusRunning
+	return m, tea.Batch(m.spinner.Tick, executeTaskCmd(0, &m))
+}
+
+func removeSymlink(m *model) error {
+	symlinkPath := filepath.Join(m.pluginDir, "cursor-acp.js")
+	
+	// Check if symlink exists
+	if _, err := os.Lstat(symlinkPath); os.IsNotExist(err) {
+		// Symlink doesn't exist, that's fine - already uninstalled
+		return nil
+	}
+
+	// Remove symlink
+	if err := os.Remove(symlinkPath); err != nil {
+		return fmt.Errorf("failed to remove symlink: %w", err)
+	}
+
+	return nil
+}
+
+func removeProviderConfig(m *model) error {
+	// Read existing config
+	data, err := os.ReadFile(m.configPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			// Config doesn't exist, nothing to remove
+			return nil
+		}
+		return fmt.Errorf("failed to read config: %w", err)
+	}
+
+	var config map[string]interface{}
+	if err := json.Unmarshal(data, &config); err != nil {
+		return fmt.Errorf("failed to parse config: %w", err)
+	}
+
+	// Remove cursor-acp provider
+	if providers, ok := config["provider"].(map[string]interface{}); ok {
+		if _, exists := providers["cursor-acp"]; exists {
+			delete(providers, "cursor-acp")
+		}
+	}
+
+	// Write config back
+	output, err := json.MarshalIndent(config, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to serialize config: %w", err)
+	}
+
+	if err := os.WriteFile(m.configPath, output, 0644); err != nil {
+		return fmt.Errorf("failed to write config: %w", err)
+	}
+
+	return nil
+}
+
+func validateConfigAfterUninstall(m *model) error {
+	if err := validateJSON(m.configPath); err != nil {
+		return fmt.Errorf("config validation failed: %w", err)
+	}
+
+	// Verify cursor-acp provider is removed
+	data, _ := os.ReadFile(m.configPath)
+	var config map[string]interface{}
+	json.Unmarshal(data, &config)
+
+	if providers, ok := config["provider"].(map[string]interface{}); ok {
+		if _, exists := providers["cursor-acp"]; exists {
+			return fmt.Errorf("cursor-acp provider still exists in config")
+		}
+	}
+
+	return nil
+}
+
 func (m model) handleTaskComplete(msg taskCompleteMsg) (tea.Model, tea.Cmd) {
 	if msg.index >= len(m.tasks) {
 		m.step = stepComplete

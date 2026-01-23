@@ -46,6 +46,15 @@ func detectExistingSetup() (bool, string) {
 	}
 
 	configPath := filepath.Join(configDir, "opencode", "opencode.json")
+	
+	// Check for plugin symlink
+	pluginDir := filepath.Join(configDir, "opencode", "plugin")
+	symlinkPath := filepath.Join(pluginDir, "cursor-acp.js")
+	if _, err := os.Lstat(symlinkPath); err == nil {
+		return true, configPath
+	}
+
+	// Check config file
 	data, err := os.ReadFile(configPath)
 	if err != nil {
 		return false, configPath
