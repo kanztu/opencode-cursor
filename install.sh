@@ -15,35 +15,41 @@ if ! command -v go &> /dev/null; then
     exit 1
 fi
 
-# Create temp directory
-TEMP_DIR=$(mktemp -d)
-cd "$TEMP_DIR"
+# Permanent installation directory in user's home
+INSTALL_DIR="${HOME}/.local/share/opencode-cursor"
+
+echo "Installing to: ${INSTALL_DIR}"
+mkdir -p "$INSTALL_DIR"
+cd "$INSTALL_DIR"
 
 echo "Downloading opencode-cursor..."
-git clone --depth 1 https://github.com/nomadcxx/opencode-cursor.git
-cd opencode-cursor
+if [ -d ".git" ]; then
+    git pull origin main
+else
+    git clone --depth 1 https://github.com/nomadcxx/opencode-cursor.git .
+fi
 
 echo "Building installer..."
-go build -o ./opencode-cursor-installer ./cmd/installer
+go build -o ./installer ./cmd/installer
 
 echo ""
 echo "Running installer..."
 echo ""
 
-# Run the installer in the cloned directory context
-OPENCODE_CURSOR_PROJECT_DIR="$(pwd)" ./opencode-cursor-installer "$@"
+# Run the installer in the permanent directory
+./installer "$@"
 
 EXIT_CODE=$?
-
-# Cleanup
-cd /
-rm -rf "$TEMP_DIR"
 
 echo ""
 if [ $EXIT_CODE -eq 0 ]; then
     echo "Installation complete!"
+    echo ""
+    echo "Plugin installed to: ${HOME}/.config/opencode/plugin/cursor-acp.js"
+    echo "Repository kept at: ${INSTALL_DIR} (for uninstall: cd ${INSTALL_DIR} && ./installer --uninstall)"
 else
     echo "Installation failed with exit code $EXIT_CODE"
+    echo "Repository kept at: ${INSTALL_DIR} for investigation"
 fi
 
 exit $EXIT_CODE
