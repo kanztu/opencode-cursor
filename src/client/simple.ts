@@ -36,6 +36,11 @@ export class SimpleCursorClient {
     mode?: 'default' | 'plan' | 'ask';
     resumeId?: string;
   } = {}): AsyncGenerator<string, void, unknown> {
+    // Input validation
+    if (!prompt || typeof prompt !== 'string') {
+      throw new Error('Invalid prompt: must be a non-empty string');
+    }
+
     const {
       cwd = process.cwd(),
       model = 'auto',
@@ -76,41 +81,67 @@ export class SimpleCursorClient {
 
     const lines: string[] = [];
     let buffer = '';
+    let processError: Error | null = null;
 
     child.stdout.on('data', (data) => {
       buffer += data.toString();
       const newLines = buffer.split('\n');
       buffer = newLines.pop() || '';
-      
+
       for (const line of newLines) {
-        if (line.trim()) {
-          lines.push(line.trim());
-        }
+        if (line.trim()) lines.push(line.trim());
       }
     });
 
-    const streamEnded = new Promise<void>((resolve) => {
+    // Add stderr handling
+    child.stderr.on('data', (data) => {
+      const errorMsg = data.toString();
+      this.log.error('cursor-agent stderr', { error: errorMsg });
+      processError = new Error(errorMsg);
+    });
+
+    // Add timeout
+    const timeoutId = setTimeout(() => {
+      child.kill('SIGTERM');
+      processError = new Error(`Timeout after ${this.config.timeout}ms`);
+    }, this.config.timeout);
+
+    const streamEnded = new Promise<number | null>((resolve) => {
       child.on('close', (code) => {
-        if (buffer.trim()) {
-          lines.push(buffer.trim());
-        }
-        if (code !== 0) {
+        clearTimeout(timeoutId);
+        if (buffer.trim()) lines.push(buffer.trim());
+        if (code !== 0 && !processError) {
           this.log.error('cursor-agent exited with non-zero code', { code });
+          processError = new Error(`cursor-agent exited with code ${code}`);
         }
-        resolve();
+        resolve(code);
       });
-      
+
       child.on('error', (error) => {
+        clearTimeout(timeoutId);
         this.log.error('cursor-agent process error', { error: error.message });
-        resolve();
+        processError = error;
+        resolve(null);
       });
     });
 
-    for (const line of lines) {
-      yield line;
+    // Wait for process to complete before yielding
+    const exitCode = await streamEnded;
+
+    if (processError) {
+      throw processError;
     }
 
-    await streamEnded;
+    // Validate and yield lines
+    for (const line of lines) {
+      try {
+        JSON.parse(line); // Validate JSON
+        yield line;
+      } catch (parseError) {
+        this.log.warn('Invalid JSON from cursor-agent', { line: line.substring(0, 100) });
+        // Skip invalid lines
+      }
+    }
   }
 
   async executePrompt(prompt: string, options: {
@@ -119,6 +150,11 @@ export class SimpleCursorClient {
     mode?: 'default' | 'plan' | 'ask';
     resumeId?: string;
   } = {}): Promise<CursorResponse> {
+    // Input validation
+    if (!prompt || typeof prompt !== 'string') {
+      throw new Error('Invalid prompt: must be a non-empty string');
+    }
+
     const {
       cwd = process.cwd(),
       model = 'auto',
