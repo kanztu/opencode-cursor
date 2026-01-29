@@ -19,7 +19,7 @@ export function createCursorProvider(options: ProviderOptions = {}) {
 
   if (mode === 'proxy') {
     // Start proxy server
-    const proxy = createProxyServer(options.proxyConfig);
+    const proxy = createProxyServer(options.proxyConfig || {});
     let baseURL: string;
 
     // Create the provider object
@@ -32,7 +32,7 @@ export function createCursorProvider(options: ProviderOptions = {}) {
       /**
        * Initialize the provider (starts the proxy server)
        */
-      async init(): Promise<typeof provider> {
+      async init(): Promise<any> {
         baseURL = await proxy.start();
         this.baseURL = baseURL;
         return this;
@@ -63,7 +63,7 @@ export function createCursorProvider(options: ProviderOptions = {}) {
               })
             });
 
-            const result = await response.json();
+            const result: any = await response.json();
             return {
               text: result.choices?.[0]?.message?.content || "",
               finishReason: "stop",

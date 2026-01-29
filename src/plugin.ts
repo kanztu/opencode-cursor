@@ -72,7 +72,7 @@ async function ensureCursorProxyServer(workspaceDirectory: string): Promise<stri
         });
       }
 
-      const body = await req.json().catch(() => ({}));
+      const body: any = await req.json().catch(() => ({}));
       const messages: Array<any> = Array.isArray(body?.messages) ? body.messages : [];
       const stream = body?.stream === true;
 

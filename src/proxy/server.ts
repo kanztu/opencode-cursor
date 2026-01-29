@@ -5,8 +5,9 @@ export function createProxyServer(config: ProxyConfig): ProxyServer {
   const host = config.host ?? "127.0.0.1";
   const healthCheckPath = config.healthCheckPath ?? "/health";
 
-  let server: ReturnType<typeof Bun.serve> | null = null;
+  let server: any = null;
   const baseURL = `http://${host}:${port}/v1`;
+  const bunAny = (globalThis as any).Bun;
 
   return {
     start(): Promise<string> {
@@ -14,7 +15,7 @@ export function createProxyServer(config: ProxyConfig): ProxyServer {
         return Promise.resolve(baseURL);
       }
 
-      server = Bun.serve({
+      server = bunAny.serve({
         port,
         hostname: host,
         fetch(request: Request): Response | Promise<Response> {

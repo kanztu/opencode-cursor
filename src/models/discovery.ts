@@ -50,7 +50,8 @@ export class ModelDiscoveryService {
 
   private async queryViaCLI(): Promise<ModelInfo[]> {
     try {
-      const proc = Bun.spawn(["cursor-agent", "models", "--json"], {
+      const bunAny = (globalThis as any).Bun;
+      const proc = bunAny.spawn(["cursor-agent", "models", "--json"], {
         timeout: 5000,
         stdout: "pipe",
         stderr: "pipe"
@@ -76,7 +77,8 @@ export class ModelDiscoveryService {
 
   private async queryViaHelp(): Promise<ModelInfo[]> {
     try {
-      const proc = Bun.spawn(["cursor-agent", "--help"], {
+      const bunAny = (globalThis as any).Bun;
+      const proc = bunAny.spawn(["cursor-agent", "--help"], {
         timeout: 5000,
         stdout: "pipe",
         stderr: "pipe"
