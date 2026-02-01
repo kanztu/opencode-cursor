@@ -6,7 +6,8 @@ export { parseOpenAIRequest } from "./proxy/handler.js";
 export type { ParsedRequest } from "./proxy/handler.js";
 export { createChatCompletionResponse, createChatCompletionChunk } from "./proxy/formatter.js";
 
-// Default export for OpenCode provider usage
-export { default } from "./provider.js";
+// Default export for OpenCode plugin usage
+export { CursorPlugin as default } from "./plugin.js";
 
-// Backward compatibility - createCursorProvider is already exported above
+// Backward compatibility
+export { default as createCursorProviderCompat } from "./provider.js";

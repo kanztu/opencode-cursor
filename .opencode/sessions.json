@@ -331,5 +331,516 @@
     "cancelled": false,
     "createdAt": 1769661973793,
     "updatedAt": 1769661973793
+  },
+  "session-1769663411665-kn4kkdt": {
+    "id": "session-1769663411665-kn4kkdt",
+    "cwd": "/tmp",
+    "cancelled": false,
+    "createdAt": 1769663411665,
+    "updatedAt": 1769663411665
+  },
+  "session-1769663411665-udolz37": {
+    "id": "session-1769663411665-udolz37",
+    "cwd": "/tmp",
+    "modeId": "plan",
+    "cancelled": false,
+    "createdAt": 1769663411665,
+    "updatedAt": 1769663411665
+  },
+  "session-1769663411666-qt1tq1a": {
+    "id": "session-1769663411666-qt1tq1a",
+    "cwd": "/tmp",
+    "modeId": "plan",
+    "cancelled": false,
+    "createdAt": 1769663411666,
+    "updatedAt": 1769663411666
+  },
+  "session-1769663411666-d4td302": {
+    "id": "session-1769663411666-d4td302",
+    "cwd": "/home/nomadx/opencode-cursor",
+    "cancelled": false,
+    "createdAt": 1769663411666,
+    "updatedAt": 1769663411666
+  },
+  "session-1769663411667-gtlcl7g": {
+    "id": "session-1769663411667-gtlcl7g",
+    "cwd": "/home/nomadx/opencode-cursor",
+    "cancelled": false,
+    "createdAt": 1769663411667,
+    "updatedAt": 1769663411667
+  },
+  "session-1769874199333-wo9eb16": {
+    "id": "session-1769874199333-wo9eb16",
+    "cwd": "/tmp",
+    "cancelled": false,
+    "createdAt": 1769874199333,
+    "updatedAt": 1769874199333
+  },
+  "session-1769874199334-jnlwif1": {
+    "id": "session-1769874199334-jnlwif1",
+    "cwd": "/tmp",
+    "modeId": "plan",
+    "cancelled": false,
+    "createdAt": 1769874199334,
+    "updatedAt": 1769874199334
+  },
+  "session-1769874199335-uzp52i2": {
+    "id": "session-1769874199335-uzp52i2",
+    "cwd": "/tmp",
+    "modeId": "plan",
+    "cancelled": false,
+    "createdAt": 1769874199335,
+    "updatedAt": 1769874199335
+  },
+  "session-1769874199335-er5wz22": {
+    "id": "session-1769874199335-er5wz22",
+    "cwd": "/home/nomadx/opencode-cursor",
+    "cancelled": false,
+    "createdAt": 1769874199335,
+    "updatedAt": 1769874199335
+  },
+  "session-1769874199335-4eid0wc": {
+    "id": "session-1769874199335-4eid0wc",
+    "cwd": "/home/nomadx/opencode-cursor",
+    "cancelled": false,
+    "createdAt": 1769874199335,
+    "updatedAt": 1769874199335
+  },
+  "session-1769874461089-plp4tik": {
+    "id": "session-1769874461089-plp4tik",
+    "cwd": "/tmp",
+    "cancelled": false,
+    "createdAt": 1769874461089,
+    "updatedAt": 1769874461089
+  },
+  "session-1769874461090-x8yzso5": {
+    "id": "session-1769874461090-x8yzso5",
+    "cwd": "/tmp",
+    "modeId": "plan",
+    "cancelled": false,
+    "createdAt": 1769874461090,
+    "updatedAt": 1769874461090
+  },
+  "session-1769874461091-g93jrui": {
+    "id": "session-1769874461091-g93jrui",
+    "cwd": "/tmp",
+    "modeId": "plan",
+    "cancelled": false,
+    "createdAt": 1769874461091,
+    "updatedAt": 1769874461091
+  },
+  "session-1769874461091-rrl62hi": {
+    "id": "session-1769874461091-rrl62hi",
+    "cwd": "/home/nomadx/opencode-cursor",
+    "cancelled": false,
+    "createdAt": 1769874461091,
+    "updatedAt": 1769874461091
+  },
+  "session-1769874461091-nzybwls": {
+    "id": "session-1769874461091-nzybwls",
+    "cwd": "/home/nomadx/opencode-cursor",
+    "cancelled": false,
+    "createdAt": 1769874461091,
+    "updatedAt": 1769874461091
+  },
+  "session-1769914069180-udvy0a1": {
+    "id": "session-1769914069180-udvy0a1",
+    "cwd": "/tmp",
+    "cancelled": false,
+    "createdAt": 1769914069180,
+    "updatedAt": 1769914069180
+  },
+  "session-1769914069181-2mi3n6v": {
+    "id": "session-1769914069181-2mi3n6v",
+    "cwd": "/tmp",
+    "modeId": "plan",
+    "cancelled": false,
+    "createdAt": 1769914069181,
+    "updatedAt": 1769914069181
+  },
+  "session-1769914069181-fqoyzi8": {
+    "id": "session-1769914069181-fqoyzi8",
+    "cwd": "/tmp",
+    "modeId": "plan",
+    "cancelled": false,
+    "createdAt": 1769914069181,
+    "updatedAt": 1769914069181
+  },
+  "session-1769914069181-pfpmywy": {
+    "id": "session-1769914069181-pfpmywy",
+    "cwd": "/home/nomadx/opencode-cursor",
+    "cancelled": false,
+    "createdAt": 1769914069181,
+    "updatedAt": 1769914069181
+  },
+  "session-1769914069182-fj1uneg": {
+    "id": "session-1769914069182-fj1uneg",
+    "cwd": "/home/nomadx/opencode-cursor",
+    "cancelled": false,
+    "createdAt": 1769914069182,
+    "updatedAt": 1769914069182
+  },
+  "session-1769914426185-3hlu1uo": {
+    "id": "session-1769914426185-3hlu1uo",
+    "cwd": "/tmp",
+    "cancelled": false,
+    "createdAt": 1769914426186,
+    "updatedAt": 1769914426186
+  },
+  "session-1769914426186-6ofb5yv": {
+    "id": "session-1769914426186-6ofb5yv",
+    "cwd": "/tmp",
+    "modeId": "plan",
+    "cancelled": false,
+    "createdAt": 1769914426186,
+    "updatedAt": 1769914426186
+  },
+  "session-1769914426187-cl7i4tp": {
+    "id": "session-1769914426187-cl7i4tp",
+    "cwd": "/tmp",
+    "modeId": "plan",
+    "cancelled": false,
+    "createdAt": 1769914426187,
+    "updatedAt": 1769914426187
+  },
+  "session-1769914426188-ariyguq": {
+    "id": "session-1769914426188-ariyguq",
+    "cwd": "/home/nomadx/opencode-cursor",
+    "cancelled": false,
+    "createdAt": 1769914426188,
+    "updatedAt": 1769914426188
+  },
+  "session-1769914426188-d9kk6ce": {
+    "id": "session-1769914426188-d9kk6ce",
+    "cwd": "/home/nomadx/opencode-cursor",
+    "cancelled": false,
+    "createdAt": 1769914426188,
+    "updatedAt": 1769914426188
+  },
+  "session-1769915171169-q0wikaw": {
+    "id": "session-1769915171169-q0wikaw",
+    "cwd": "/tmp",
+    "cancelled": false,
+    "createdAt": 1769915171169,
+    "updatedAt": 1769915171169
+  },
+  "session-1769915171170-xc91ajh": {
+    "id": "session-1769915171170-xc91ajh",
+    "cwd": "/tmp",
+    "modeId": "plan",
+    "cancelled": false,
+    "createdAt": 1769915171170,
+    "updatedAt": 1769915171170
+  },
+  "session-1769915171170-zmwb8yj": {
+    "id": "session-1769915171170-zmwb8yj",
+    "cwd": "/tmp",
+    "modeId": "plan",
+    "cancelled": false,
+    "createdAt": 1769915171170,
+    "updatedAt": 1769915171170
+  },
+  "session-1769915171170-sqpiz0p": {
+    "id": "session-1769915171170-sqpiz0p",
+    "cwd": "/home/nomadx/opencode-cursor",
+    "cancelled": false,
+    "createdAt": 1769915171170,
+    "updatedAt": 1769915171170
+  },
+  "session-1769915171171-tab5fn5": {
+    "id": "session-1769915171171-tab5fn5",
+    "cwd": "/home/nomadx/opencode-cursor",
+    "cancelled": false,
+    "createdAt": 1769915171171,
+    "updatedAt": 1769915171171
+  },
+  "session-1769915353417-g5hv5o4": {
+    "id": "session-1769915353417-g5hv5o4",
+    "cwd": "/tmp",
+    "modeId": "plan",
+    "cancelled": false,
+    "createdAt": 1769915353417,
+    "updatedAt": 1769915353417
+  },
+  "session-1769915353418-yka5ehb": {
+    "id": "session-1769915353418-yka5ehb",
+    "cwd": "/tmp",
+    "cancelled": false,
+    "createdAt": 1769915353418,
+    "updatedAt": 1769915353418
+  },
+  "session-1769915353418-le49jo0": {
+    "id": "session-1769915353418-le49jo0",
+    "cwd": "/home/nomadx/opencode-cursor",
+    "cancelled": false,
+    "createdAt": 1769915353418,
+    "updatedAt": 1769915353419,
+    "resumeId": "resume-123"
+  },
+  "session-1769915353418-mt2rfq0": {
+    "id": "session-1769915353418-mt2rfq0",
+    "cwd": "/home/nomadx/opencode-cursor",
+    "cancelled": true,
+    "createdAt": 1769915353418,
+    "updatedAt": 1769915353419
+  },
+  "session-1769918623773-w2nwuga": {
+    "id": "session-1769918623773-w2nwuga",
+    "cwd": "/tmp",
+    "modeId": "plan",
+    "cancelled": false,
+    "createdAt": 1769918623773,
+    "updatedAt": 1769918623773
+  },
+  "session-1769918623774-v81ir8b": {
+    "id": "session-1769918623774-v81ir8b",
+    "cwd": "/home/nomadx/opencode-cursor",
+    "cancelled": false,
+    "createdAt": 1769918623774,
+    "updatedAt": 1769918623774
+  },
+  "session-1769918623774-0njw1an": {
+    "id": "session-1769918623774-0njw1an",
+    "cwd": "/tmp",
+    "cancelled": false,
+    "createdAt": 1769918623774,
+    "updatedAt": 1769918623774
+  },
+  "session-1769918623774-krgw0j3": {
+    "id": "session-1769918623774-krgw0j3",
+    "cwd": "/tmp",
+    "modeId": "plan",
+    "cancelled": false,
+    "createdAt": 1769918623774,
+    "updatedAt": 1769918623774
+  },
+  "session-1769918623775-nysfihc": {
+    "id": "session-1769918623775-nysfihc",
+    "cwd": "/home/nomadx/opencode-cursor",
+    "cancelled": false,
+    "createdAt": 1769918623775,
+    "updatedAt": 1769918623775
+  },
+  "session-1769918735997-zfrdjcy": {
+    "id": "session-1769918735997-zfrdjcy",
+    "cwd": "/home/nomadx/opencode-cursor",
+    "cancelled": false,
+    "createdAt": 1769918735997,
+    "updatedAt": 1769918735997
+  },
+  "session-1769918735997-77yki3w": {
+    "id": "session-1769918735997-77yki3w",
+    "cwd": "/tmp",
+    "modeId": "plan",
+    "cancelled": false,
+    "createdAt": 1769918735997,
+    "updatedAt": 1769918735998
+  },
+  "session-1769918735998-bki4p3w": {
+    "id": "session-1769918735998-bki4p3w",
+    "cwd": "/home/nomadx/opencode-cursor",
+    "cancelled": false,
+    "createdAt": 1769918735998,
+    "updatedAt": 1769918735998
+  },
+  "session-1769918735998-oeij3vb": {
+    "id": "session-1769918735998-oeij3vb",
+    "cwd": "/tmp",
+    "modeId": "plan",
+    "cancelled": false,
+    "createdAt": 1769918735998,
+    "updatedAt": 1769918735998
+  },
+  "session-1769918735999-p805s7n": {
+    "id": "session-1769918735999-p805s7n",
+    "cwd": "/tmp",
+    "cancelled": false,
+    "createdAt": 1769918735999,
+    "updatedAt": 1769918735999
+  },
+  "session-1769918835159-hfcq9aw": {
+    "id": "session-1769918835159-hfcq9aw",
+    "cwd": "/home/nomadx/opencode-cursor",
+    "cancelled": false,
+    "createdAt": 1769918835159,
+    "updatedAt": 1769918835159
+  },
+  "session-1769918835160-ionf0m8": {
+    "id": "session-1769918835160-ionf0m8",
+    "cwd": "/tmp",
+    "modeId": "plan",
+    "cancelled": false,
+    "createdAt": 1769918835160,
+    "updatedAt": 1769918835160
+  },
+  "session-1769918835160-uhuslap": {
+    "id": "session-1769918835160-uhuslap",
+    "cwd": "/home/nomadx/opencode-cursor",
+    "cancelled": false,
+    "createdAt": 1769918835160,
+    "updatedAt": 1769918835160
+  },
+  "session-1769918835160-qdlz2zl": {
+    "id": "session-1769918835160-qdlz2zl",
+    "cwd": "/tmp",
+    "modeId": "plan",
+    "cancelled": false,
+    "createdAt": 1769918835160,
+    "updatedAt": 1769918835160
+  },
+  "session-1769918835161-qz7xpf9": {
+    "id": "session-1769918835161-qz7xpf9",
+    "cwd": "/tmp",
+    "cancelled": false,
+    "createdAt": 1769918835161,
+    "updatedAt": 1769918835161
+  },
+  "session-1769918919625-dyvg6y6": {
+    "id": "session-1769918919625-dyvg6y6",
+    "cwd": "/home/nomadx/opencode-cursor",
+    "cancelled": false,
+    "createdAt": 1769918919625,
+    "updatedAt": 1769918919625
+  },
+  "session-1769918919625-lk963lu": {
+    "id": "session-1769918919625-lk963lu",
+    "cwd": "/tmp",
+    "modeId": "plan",
+    "cancelled": false,
+    "createdAt": 1769918919625,
+    "updatedAt": 1769918919625
+  },
+  "session-1769918919626-bi2c89o": {
+    "id": "session-1769918919626-bi2c89o",
+    "cwd": "/home/nomadx/opencode-cursor",
+    "cancelled": false,
+    "createdAt": 1769918919626,
+    "updatedAt": 1769918919626
+  },
+  "session-1769918919626-3n2qs2u": {
+    "id": "session-1769918919626-3n2qs2u",
+    "cwd": "/tmp",
+    "modeId": "plan",
+    "cancelled": false,
+    "createdAt": 1769918919626,
+    "updatedAt": 1769918919626
+  },
+  "session-1769918919626-y2a4722": {
+    "id": "session-1769918919626-y2a4722",
+    "cwd": "/tmp",
+    "cancelled": false,
+    "createdAt": 1769918919626,
+    "updatedAt": 1769918919626
+  },
+  "session-1769918977744-i2qi026": {
+    "id": "session-1769918977744-i2qi026",
+    "cwd": "/home/nomadx/opencode-cursor",
+    "cancelled": false,
+    "createdAt": 1769918977744,
+    "updatedAt": 1769918977744
+  },
+  "session-1769918977745-uvndvy8": {
+    "id": "session-1769918977745-uvndvy8",
+    "cwd": "/tmp",
+    "modeId": "plan",
+    "cancelled": false,
+    "createdAt": 1769918977745,
+    "updatedAt": 1769918977745
+  },
+  "session-1769918977745-cb7ssv1": {
+    "id": "session-1769918977745-cb7ssv1",
+    "cwd": "/home/nomadx/opencode-cursor",
+    "cancelled": false,
+    "createdAt": 1769918977745,
+    "updatedAt": 1769918977745
+  },
+  "session-1769918977746-083jjbz": {
+    "id": "session-1769918977746-083jjbz",
+    "cwd": "/tmp",
+    "modeId": "plan",
+    "cancelled": false,
+    "createdAt": 1769918977746,
+    "updatedAt": 1769918977746
+  },
+  "session-1769918977746-z3qgki6": {
+    "id": "session-1769918977746-z3qgki6",
+    "cwd": "/tmp",
+    "cancelled": false,
+    "createdAt": 1769918977746,
+    "updatedAt": 1769918977746
+  },
+  "session-1769919100385-i1ov9al": {
+    "id": "session-1769919100385-i1ov9al",
+    "cwd": "/home/nomadx/opencode-cursor",
+    "cancelled": false,
+    "createdAt": 1769919100385,
+    "updatedAt": 1769919100385
+  },
+  "session-1769919100385-dnm9en8": {
+    "id": "session-1769919100385-dnm9en8",
+    "cwd": "/tmp",
+    "modeId": "plan",
+    "cancelled": false,
+    "createdAt": 1769919100385,
+    "updatedAt": 1769919100386
+  },
+  "session-1769919100386-tc2g2m7": {
+    "id": "session-1769919100386-tc2g2m7",
+    "cwd": "/home/nomadx/opencode-cursor",
+    "cancelled": false,
+    "createdAt": 1769919100386,
+    "updatedAt": 1769919100386
+  },
+  "session-1769919100386-bv870va": {
+    "id": "session-1769919100386-bv870va",
+    "cwd": "/tmp",
+    "modeId": "plan",
+    "cancelled": false,
+    "createdAt": 1769919100386,
+    "updatedAt": 1769919100386
+  },
+  "session-1769919100387-g2j9krn": {
+    "id": "session-1769919100387-g2j9krn",
+    "cwd": "/tmp",
+    "cancelled": false,
+    "createdAt": 1769919100387,
+    "updatedAt": 1769919100387
+  },
+  "session-1769919136963-emvusn8": {
+    "id": "session-1769919136963-emvusn8",
+    "cwd": "/home/nomadx/opencode-cursor",
+    "cancelled": false,
+    "createdAt": 1769919136963,
+    "updatedAt": 1769919136963
+  },
+  "session-1769919136963-crib4eg": {
+    "id": "session-1769919136963-crib4eg",
+    "cwd": "/tmp",
+    "modeId": "plan",
+    "cancelled": false,
+    "createdAt": 1769919136963,
+    "updatedAt": 1769919136963
+  },
+  "session-1769919136964-19m52br": {
+    "id": "session-1769919136964-19m52br",
+    "cwd": "/home/nomadx/opencode-cursor",
+    "cancelled": false,
+    "createdAt": 1769919136964,
+    "updatedAt": 1769919136964
+  },
+  "session-1769919136964-e2j9j3i": {
+    "id": "session-1769919136964-e2j9j3i",
+    "cwd": "/tmp",
+    "modeId": "plan",
+    "cancelled": false,
+    "createdAt": 1769919136964,
+    "updatedAt": 1769919136964
+  },
+  "session-1769919136964-f8zzvtd": {
+    "id": "session-1769919136964-f8zzvtd",
+    "cwd": "/tmp",
+    "cancelled": false,
+    "createdAt": 1769919136964,
+    "updatedAt": 1769919136964
   }
 }

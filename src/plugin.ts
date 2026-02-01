@@ -212,9 +212,211 @@ async function ensureCursorProxyServer(workspaceDirectory: string): Promise<stri
     }
   };
 
-  const bunAny = globalThis as any;
-  if (typeof bunAny.Bun !== "undefined" && typeof bunAny.Bun.serve === "function") {
-    // If another process already started a proxy on the default port, reuse it.
+  // Check if another process already started a proxy on the default port
+  try {
+    const res = await fetch(`http://${CURSOR_PROXY_HOST}:${CURSOR_PROXY_DEFAULT_PORT}/health`).catch(() => null);
+    if (res && res.ok) {
+      g[key].baseURL = CURSOR_PROXY_DEFAULT_BASE_URL;
+      return CURSOR_PROXY_DEFAULT_BASE_URL;
+    }
+  } catch {
+    // ignore
+  }
+
+  // Use Node.js http server (works in both Node and Bun)
+  const http = await import("http");
+  const { spawn } = await import("child_process");
+
+  const requestHandler = async (req: any, res: any) => {
+    try{
+      const url = new URL(req.url || "/", `http://${req.headers.host}`);
+
+      if (url.pathname === "/health") {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true }));
+        return;
+      }
+
+      if (url.pathname !== "/v1/chat/completions" && url.pathname !== "/chat/completions") {
+        res.writeHead(404, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: `Unsupported path: ${url.pathname}` }));
+        return;
+      }
+
+      let body = "";
+      for await (const chunk of req) {
+        body += chunk;
+      }
+
+      const bodyData: any = JSON.parse(body || "{}");
+      const messages: Array<any> = Array.isArray(bodyData?.messages) ? bodyData.messages : [];
+      const stream = bodyData?.stream === true;
+
+      // Convert messages to prompt
+      const lines: string[] = [];
+      for (const message of messages) {
+        const role = typeof message.role === "string" ? message.role : "user";
+        const content = message.content;
+
+        if (typeof content === "string") {
+          lines.push(`${role.toUpperCase()}: ${content}`);
+        } else if (Array.isArray(content)) {
+          const textParts = content
+            .map((part: any) => {
+              if (part && typeof part === "object" && part.type === "text" && typeof part.text === "string") {
+                return part.text;
+              }
+              return "";
+            })
+            .filter(Boolean);
+          if (textParts.length) {
+            lines.push(`${role.toUpperCase()}: ${textParts.join("\n")}`);
+          }
+        }
+      }
+      const prompt = lines.join("\n\n");
+      const model = typeof bodyData?.model === "string" ? bodyData.model : "auto";
+
+      const cmd = [
+        "cursor-agent",
+        "--print",
+        "--output-format",
+        stream ? "stream-json" : "text",
+        "--workspace",
+        workspaceDirectory,
+        "--model",
+        model,
+        prompt,
+      ];
+
+      const child = spawn(cmd[0], cmd.slice(1), { stdio: ["ignore", "pipe", "pipe"] });
+
+      if (!stream) {
+        const stdoutChunks: Buffer[] = [];
+        const stderrChunks: Buffer[] = [];
+
+        child.stdout.on("data", (chunk) => stdoutChunks.push(chunk));
+        child.stderr.on("data", (chunk) => stderrChunks.push(chunk));
+
+        child.on("close", (code) => {
+          const stdout = Buffer.concat(stdoutChunks).toString().trim();
+          const stderr = Buffer.concat(stderrChunks).toString().trim();
+
+          if (code !== 0 && stderr.length > 0) {
+            res.writeHead(401, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ error: stderr }));
+            return;
+          }
+
+          const response = {
+            id: `cursor-acp-${Date.now()}`,
+            object: "chat.completion",
+            created: Math.floor(Date.now() / 1000),
+            model,
+            choices: [
+              {
+                index: 0,
+                message: { role: "assistant", content: stdout || stderr },
+                finish_reason: "stop",
+              },
+            ],
+          };
+
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify(response));
+        });
+      } else {
+        // Streaming
+        res.writeHead(200, {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          Connection: "keep-alive",
+        });
+
+        const id = `cursor-acp-${Date.now()}`;
+        const created = Math.floor(Date.now() / 1000);
+
+        child.stdout.on("data", (chunk) => {
+          const text = chunk.toString();
+          const chunkData = {
+            id,
+            object: "chat.completion.chunk",
+            created,
+            model,
+            choices: [
+              {
+                index: 0,
+                delta: { content: text },
+                finish_reason: null,
+              },
+            ],
+          };
+          res.write(`data: ${JSON.stringify(chunkData)}\n\n`);
+        });
+
+        child.on("close", (code) => {
+          if (code !== 0) {
+            child.stderr.on("data", (chunk) => {
+              const errChunk = {
+                id,
+                object: "chat.completion.chunk",
+                created,
+                model,
+                choices: [
+                  {
+                    index: 0,
+                    delta: { content: `cursor-agent failed: ${chunk.toString()}` },
+                    finish_reason: "stop",
+                  },
+                ],
+              };
+              res.write(`data: ${JSON.stringify(errChunk)}\n\n`);
+            });
+          }
+
+          const doneChunk = {
+            id,
+            object: "chat.completion.chunk",
+            created,
+            model,
+            choices: [
+              {
+                index: 0,
+                delta: {},
+                finish_reason: "stop",
+              },
+            ],
+          };
+          res.write(`data: ${JSON.stringify(doneChunk)}\n\n`);
+          res.write("data: [DONE]\n\n");
+          res.end();
+        });
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: message }));
+    }
+  };
+
+  const server = http.createServer(requestHandler);
+
+  // Try to start on default port
+  try {
+    await new Promise<void>((resolve, reject) => {
+      server.listen(CURSOR_PROXY_DEFAULT_PORT, CURSOR_PROXY_HOST, () => resolve());
+      server.once("error", reject);
+    });
+
+    const baseURL = `http://${CURSOR_PROXY_HOST}:${CURSOR_PROXY_DEFAULT_PORT}/v1`;
+    g[key].baseURL = baseURL;
+    return baseURL;
+  } catch (error: any) {
+    if (error?.code !== "EADDRINUSE") {
+      throw error;
+    }
+
+    // Port in use - check if it's our proxy
     try {
       const res = await fetch(`http://${CURSOR_PROXY_HOST}:${CURSOR_PROXY_DEFAULT_PORT}/health`).catch(() => null);
       if (res && res.ok) {
@@ -225,45 +427,17 @@ async function ensureCursorProxyServer(workspaceDirectory: string): Promise<stri
       // ignore
     }
 
-    const startServer = (port: number) => {
-      return bunAny.Bun.serve({
-        hostname: CURSOR_PROXY_HOST,
-        port,
-        fetch: handler,
-      });
-    };
+    // Start on random port
+    await new Promise<void>((resolve, reject) => {
+      server.listen(0, CURSOR_PROXY_HOST, () => resolve());
+      server.once("error", reject);
+    });
 
-    try {
-      const server = startServer(CURSOR_PROXY_DEFAULT_PORT);
-      const baseURL = `http://${CURSOR_PROXY_HOST}:${server.port}/v1`;
-      g[key].baseURL = baseURL;
-      return baseURL;
-    } catch (error: any) {
-      const code = error?.code;
-      if (code !== "EADDRINUSE") {
-        throw error;
-      }
-
-      // Something is already bound to the default port. Only reuse it if it looks like our proxy.
-      try {
-        const res = await fetch(`http://${CURSOR_PROXY_HOST}:${CURSOR_PROXY_DEFAULT_PORT}/health`).catch(() => null);
-        if (res && res.ok) {
-          g[key].baseURL = CURSOR_PROXY_DEFAULT_BASE_URL;
-          return CURSOR_PROXY_DEFAULT_BASE_URL;
-        }
-      } catch {
-        // ignore
-      }
-
-      // Fallback: start on a random free port.
-      const server = startServer(0);
-      const baseURL = `http://${CURSOR_PROXY_HOST}:${server.port}/v1`;
-      g[key].baseURL = baseURL;
-      return baseURL;
-    }
+    const addr = server.address() as any;
+    const baseURL = `http://${CURSOR_PROXY_HOST}:${addr.port}/v1`;
+    g[key].baseURL = baseURL;
+    return baseURL;
   }
-
-  throw new Error("Cursor proxy server requires Bun runtime");
 }
 
 /**
