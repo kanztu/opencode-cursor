@@ -7,6 +7,11 @@ installer
 opencode-cursor-installer
 opencode-cursor-*.log
 
+# OpenCode local config
+.opencode/
+.claude/
+.sisyphus/
+
 # Development documentation
 BUG_ANALYSIS.md
 DEBUG_SEGFAULT.md

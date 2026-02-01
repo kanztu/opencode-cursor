@@ -1,39 +1,80 @@
 ![header](docs/header.png)
 
-A lightweight OpenCode plugin for Cursor CLI integration via HTTP proxy.
+A lightweight OpenCode plugin that bridges to Cursor CLI via HTTP proxy. No E2BIG errors, full streaming support, 30+ models.
 
-## Quick Install (Go TUI Installer)
+## Installation
+
+**Quick Install (Go TUI Installer):**
 
 ```bash
-cd /path/to/opencode-cursor
+git clone https://github.com/Nomadcxx/opencode-cursor.git
+cd opencode-cursor
 ./cmd/installer/installer-binary
 ```
 
-Features animated terminal art, progress tracking, and automatic rollback on failure.
+**Manual Install:**
+
+```bash
+bun install
+bun run build
+ln -s $(pwd)/dist/index.js ~/.config/opencode/plugin/cursor-acp.js
+```
+
+Then add to `~/.config/opencode/opencode.json`:
+
+```json
+{
+  "plugin": ["opencode-cursor"],
+  "provider": {
+    "cursor-acp": {
+      "name": "Cursor",
+      "npm": "@ai-sdk/openai-compatible",
+      "options": { "baseURL": "http://127.0.0.1:32124/v1" }
+    }
+  }
+}
+```
 
 ## Usage
 
 ```bash
-# Run with cursor-acp model
+# Run with auto model
 opencode run "your prompt" --model cursor-acp/auto
+
+# Or select specific model
+opencode run "your prompt" --model cursor-acp/sonnet-4.5
 ```
-
-## How It Works
-
-Uses HTTP proxy server (port 32124) to bridge OpenCode ↔ cursor-agent. No E2BIG errors, full streaming support.
 
 ## Prerequisites
 
 - [Bun](https://bun.sh/) - JavaScript runtime
 - [cursor-agent](https://cursor.com/) - Cursor CLI (`curl -fsSL https://cursor.com/install | bash`)
 
-## Development
+## How It Works
 
-```bash
-bun install
-bun run build
-```
+1. Plugin starts HTTP proxy server on port 32124
+2. OpenCode sends requests to proxy via `@ai-sdk/openai-compatible`
+3. Proxy spawns `cursor-agent` for each request
+4. cursor-agent streams responses back through proxy
+
+## Models
+
+Available models include:
+- `cursor-acp/auto` - Auto-select best available
+- `cursor-acp/sonnet-4.5` - Claude 4.5 Sonnet
+- `cursor-acp/opus-4.5` - Claude 4.5 Opus
+- `cursor-acp/gpt-5.2` - GPT-5.2
+- `cursor-acp/gemini-3-pro` - Gemini 3 Pro
+- ... and 25+ more
+
+## Features
+
+- HTTP proxy mode (no CLI argument limits)
+- Full streaming support
+- Tool calling support
+- Auto model discovery
+- Go TUI installer with progress tracking
 
 ## License
 
-ISC
+BSD-3-Clause
