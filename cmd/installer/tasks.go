@@ -218,8 +218,12 @@ func updateConfig(m *model) error {
 	}
 
 	// Add cursor-acp provider (merge with existing to preserve user config)
-	existingCursorAcp, _ := providers["cursor-acp"].(map[string]interface{})
-	if existingCursorAcp == nil {
+	existingCursorAcp, ok := providers["cursor-acp"].(map[string]interface{})
+	if !ok {
+		// If cursor-acp exists but isn't a map, user config is malformed
+		if providers["cursor-acp"] != nil {
+			return fmt.Errorf("cursor-acp provider has invalid type (expected object, got %T)", providers["cursor-acp"])
+		}
 		existingCursorAcp = make(map[string]interface{})
 	}
 
