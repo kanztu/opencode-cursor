@@ -135,14 +135,21 @@ func buildPlugin(m *model) error {
 }
 
 func installAiSdk(m *model) error {
-	configDir, _ := getConfigDir()
+	configDir, err := getConfigDir()
+	if err != nil {
+		return NewConfigError("failed to determine config directory", "", err)
+	}
+
 	opencodeDir := filepath.Join(configDir, "opencode")
 
-	// Install @ai-sdk/openai-compatible
+	if err := os.MkdirAll(opencodeDir, 0755); err != nil {
+		return NewConfigError("failed to create opencode directory", opencodeDir, err)
+	}
+
 	installCmd := exec.Command("bun", "install", "@ai-sdk/openai-compatible")
 	installCmd.Dir = opencodeDir
 	if err := runCommand("bun install @ai-sdk/openai-compatible", installCmd, m.logFile); err != nil {
-		return fmt.Errorf("failed to install AI SDK: %w", err)
+		return NewExecError("failed to install AI SDK", "", err)
 	}
 
 	return nil
