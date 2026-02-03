@@ -23,10 +23,27 @@ go build -o ./installer ./cmd/installer && ./installer
 Paste this into any LLM agent (Claude Code, OpenCode, Cursor, etc.):
 
 ```
-Install the cursor-acp plugin for OpenCode by following: https://raw.githubusercontent.com/Nomadcxx/opencode-cursor/main/README.md
+Install the cursor-acp plugin for OpenCode:
 
-After installation, verify by running: cursor-agent --list-models
-Then check ~/.config/opencode/opencode.json contains the cursor-acp provider with models.
+1. Clone and build:
+   git clone https://github.com/Nomadcxx/opencode-cursor.git
+   cd opencode-cursor
+   bun install && bun run build
+
+2. Create plugin symlink:
+   mkdir -p ~/.config/opencode/plugin
+   ln -sf $(pwd)/dist/index.js ~/.config/opencode/plugin/cursor-acp.js
+
+3. Get available models:
+   cursor-agent --list-models
+
+4. Add to ~/.config/opencode/opencode.json - merge with existing config:
+   - Add "cursor-acp" to the "plugin" array
+   - Add a "cursor-acp" provider with models from step 3
+   - Set npm to "@ai-sdk/openai-compatible" 
+   - Set options.baseURL to "http://127.0.0.1:32124/v1"
+
+5. Verify: opencode models | grep cursor
 ```
 
 **Option D: Manual Install**
