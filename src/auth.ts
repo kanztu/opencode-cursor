@@ -2,7 +2,7 @@
 
 import { spawn } from "child_process";
 import { existsSync } from "fs";
-import { homedir } from "os";
+import { homedir, platform } from "os";
 import { join } from "path";
 import { createLogger } from "./utils/logger";
 import { stripAnsi } from "./utils/errors";
@@ -26,25 +26,25 @@ export async function pollForAuthFile(
   intervalMs: number = AUTH_POLL_INTERVAL
 ): Promise<boolean> {
   const startTime = Date.now();
-  const authFile = getAuthFilePath();
+  const possiblePaths = getPossibleAuthPaths();
 
   return new Promise((resolve) => {
     const check = () => {
       const elapsed = Date.now() - startTime;
-      const exists = existsSync(authFile);
+      
+      for (const authPath of possiblePaths) {
+        if (existsSync(authPath)) {
+          log.info("Auth file detected", { path: authPath });
+          resolve(true);
+          return;
+        }
+      }
 
       log.debug("Polling for auth file", {
-        path: authFile,
-        exists,
+        checkedPaths: possiblePaths,
         elapsed: `${elapsed}ms`,
         timeout: `${timeoutMs}ms`,
       });
-
-      if (exists) {
-        log.info("Auth file detected");
-        resolve(true);
-        return;
-      }
 
       if (elapsed >= timeoutMs) {
         log.warn("Auth file polling timed out");
@@ -195,13 +195,54 @@ export async function startCursorOAuth(): Promise<{
 }
 
 export function verifyCursorAuth(): boolean {
-  // cursor-agent stores auth in ~/.config/cursor/auth.json (not ~/.cursor/)
-  const authFile = join(homedir(), ".config", "cursor", "auth.json");
-  const exists = existsSync(authFile);
-  log.debug("Checking auth file", { path: authFile, exists });
-  return exists;
+  const possiblePaths = getPossibleAuthPaths();
+  
+  for (const authPath of possiblePaths) {
+    if (existsSync(authPath)) {
+      log.debug("Auth file found", { path: authPath });
+      return true;
+    }
+  }
+  
+  log.debug("No auth file found", { checkedPaths: possiblePaths });
+  return false;
+}
+
+/**
+ * Returns all possible auth file paths in priority order.
+ * - macOS: ~/.cursor/auth.json (primary), ~/.config/cursor/auth.json (fallback)
+ * - Linux: ~/.config/cursor/auth.json (XDG), XDG_CONFIG_HOME/cursor/auth.json, ~/.cursor/auth.json
+ */
+export function getPossibleAuthPaths(): string[] {
+  const home = homedir();
+  const paths: string[] = [];
+  const isDarwin = platform() === "darwin";
+
+  if (isDarwin) {
+    paths.push(join(home, ".cursor", "auth.json"));
+    paths.push(join(home, ".config", "cursor", "auth.json"));
+  } else {
+    paths.push(join(home, ".config", "cursor", "auth.json"));
+    
+    const xdgConfig = process.env.XDG_CONFIG_HOME;
+    if (xdgConfig && xdgConfig !== join(home, ".config")) {
+      paths.push(join(xdgConfig, "cursor", "auth.json"));
+    }
+    
+    paths.push(join(home, ".cursor", "auth.json"));
+  }
+
+  return paths;
 }
 
 export function getAuthFilePath(): string {
-  return join(homedir(), ".config", "cursor", "auth.json");
+  const possiblePaths = getPossibleAuthPaths();
+  
+  for (const authPath of possiblePaths) {
+    if (existsSync(authPath)) {
+      return authPath;
+    }
+  }
+  
+  return possiblePaths[0];
 }
