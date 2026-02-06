@@ -87,6 +87,8 @@ Or if you'd rather do it by hand, add this to `~/.config/opencode/opencode.json`
         "gpt-5.1-high": { "name": "GPT-5.1 High" },
         "gpt-5.1-codex-max": { "name": "GPT-5.1 Codex Max" },
         "gpt-5.1-codex-max-high": { "name": "GPT-5.1 Codex Max High" },
+        "opus-4.6-thinking": { "name": "Claude 4.6 Opus (Thinking)" },
+        "opus-4.6": { "name": "Claude 4.6 Opus" },
         "opus-4.5": { "name": "Claude 4.5 Opus" },
         "opus-4.5-thinking": { "name": "Claude 4.5 Opus (Thinking)" },
         "sonnet-4.5": { "name": "Claude 4.5 Sonnet" },
@@ -149,7 +151,7 @@ The proxy also exposes a `/v1/models` endpoint that fetches models in real-time:
 curl http://127.0.0.1:32124/v1/models
 ```
 
-Common models: `auto`, `sonnet-4.5`, `opus-4.5`, `gpt-5.2`, `gemini-3-pro`, `grok`, `composer-1`
+Common models: `auto`, `sonnet-4.5`, `opus-4.6-thinking`, `opus-4.6`, `gpt-5.2`, `gemini-3-pro`, `grok`, `composer-1`
 
 ## Architecture
 
