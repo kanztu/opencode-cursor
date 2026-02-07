@@ -124,11 +124,11 @@ func buildPlugin(m *model) error {
 		return fmt.Errorf("bun run build failed")
 	}
 
-	// Verify dist/index.js exists
-	distPath := filepath.Join(m.projectDir, "dist", "index.js")
+	// Verify dist/plugin-entry.js exists (plugin-only entrypoint)
+	distPath := filepath.Join(m.projectDir, "dist", "plugin-entry.js")
 	info, err := os.Stat(distPath)
 	if err != nil || info.Size() == 0 {
-		return fmt.Errorf("dist/index.js not found or empty after build")
+		return fmt.Errorf("dist/plugin-entry.js not found or empty after build")
 	}
 
 	return nil
@@ -197,8 +197,8 @@ func createSymlink(m *model) error {
 		os.Remove(symlinkPath)
 	}
 
-	// Create symlink to built plugin
-	distPath := filepath.Join(m.projectDir, "dist", "index.js")
+	// Create symlink to built plugin entry
+	distPath := filepath.Join(m.projectDir, "dist", "plugin-entry.js")
 	if err := os.Symlink(distPath, symlinkPath); err != nil {
 		return fmt.Errorf("failed to create symlink: %w", err)
 	}

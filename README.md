@@ -37,7 +37,7 @@ Install the cursor-acp plugin for OpenCode:
 
 2. Create plugin symlink:
    mkdir -p ~/.config/opencode/plugin
-   ln -sf $(pwd)/dist/index.js ~/.config/opencode/plugin/cursor-acp.js
+   ln -sf $(pwd)/dist/plugin-entry.js ~/.config/opencode/plugin/cursor-acp.js
 
 3. Get available models:
    cursor-agent models
@@ -55,7 +55,7 @@ Install the cursor-acp plugin for OpenCode:
 
 ```bash
 bun install && bun run build
-ln -s $(pwd)/dist/index.js ~/.config/opencode/plugin/cursor-acp.js
+ln -s $(pwd)/dist/plugin-entry.js ~/.config/opencode/plugin/cursor-acp.js
 ```
 
 The installers handle the rest automatically. If you're doing a manual install, you'll need to do the following steps yourself.
@@ -180,7 +180,7 @@ flowchart TB
 
     subgraph CONFIG["⚙️ Config & Credentials"]
         direction LR
-        SYMLINK["~/.config/opencode/plugin/cursor-acp.js\n→ dist/index.js"]
+        SYMLINK["~/.config/opencode/plugin/cursor-acp.js\n→ dist/plugin-entry.js"]
         CONF["~/.config/opencode/opencode.json\nprovider · models · baseURL"]
         CREDS["~/.cursor/auth.json\nor ~/.config/cursor/cli-config.json"]
     end

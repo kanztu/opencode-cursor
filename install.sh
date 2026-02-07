@@ -66,8 +66,8 @@ else
     bun install
     bun run build
 
-    if [ ! -s "dist/index.js" ]; then
-        echo "Error: dist/index.js not found or empty after build"
+    if [ ! -s "dist/plugin-entry.js" ]; then
+        echo "Error: dist/plugin-entry.js not found or empty after build"
         exit 1
     fi
 
@@ -78,7 +78,7 @@ else
     echo "Creating plugin symlink..."
     mkdir -p "$PLUGIN_DIR"
     rm -f "${PLUGIN_DIR}/cursor-acp.js"
-    ln -sf "$(pwd)/dist/index.js" "${PLUGIN_DIR}/cursor-acp.js"
+    ln -sf "$(pwd)/dist/plugin-entry.js" "${PLUGIN_DIR}/cursor-acp.js"
 
     echo "Updating config..."
     MODELS_JSON="{}"
