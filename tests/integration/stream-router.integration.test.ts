@@ -1,6 +1,5 @@
 import { describe, it, expect } from "bun:test";
 import { ToolRouter } from "../../src/tools/router.js";
-import { OpenCodeToolExecutor } from "../../src/tools/executor.js";
 import { StreamToSseConverter } from "../../src/streaming/openai-sse.js";
 import { parseStreamJsonLine } from "../../src/streaming/parser.js";
 
@@ -11,15 +10,12 @@ describe("Stream + ToolRouter end-to-end", () => {
     const toolsByName = new Map();
     toolsByName.set("oc_brainstorm", { id: "brainstorm", name: "oc_brainstorm", description: "", parameters: {} });
 
-    // Executor echoes args
-    const executor = new (class extends OpenCodeToolExecutor {
-      constructor() { super({}, { mode: "sdk" }); }
-      async execute(toolId: string, args: any) {
-        return { status: "success", output: JSON.stringify({ toolId, args }) };
-      }
-    })();
+    const execute = async (toolId: string, args: any) => ({
+      status: "success",
+      output: JSON.stringify({ toolId, args }),
+    });
 
-    const router = new ToolRouter({ executor, toolsByName });
+    const router = new ToolRouter({ execute, toolsByName });
     const converter = new StreamToSseConverter("cursor", { id: "chunk-1", created: 123 });
 
     const toolCallEvent = {
@@ -47,14 +43,12 @@ describe("Stream + ToolRouter end-to-end", () => {
     toolsByName.set("oc_one", { id: "one", name: "oc_one", description: "", parameters: {} });
     toolsByName.set("oc_two", { id: "two", name: "oc_two", description: "", parameters: {} });
 
-    const executor = new (class extends OpenCodeToolExecutor {
-      constructor() { super({}, { mode: "sdk" }); }
-      async execute(toolId: string, args: any) {
-        return { status: "success", output: JSON.stringify({ toolId, args }) };
-      }
-    })();
+    const execute = async (toolId: string, args: any) => ({
+      status: "success",
+      output: JSON.stringify({ toolId, args }),
+    });
 
-    const router = new ToolRouter({ executor, toolsByName });
+    const router = new ToolRouter({ execute, toolsByName });
 
     const events = [
       { type: "tool_call", call_id: "call-1", name: "oc_one", tool_call: { oc_one: { args: { a: 1 } } } },

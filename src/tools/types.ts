@@ -26,4 +26,4 @@ export interface ToolResult {
   content: string;
 }
 
-export type ToolExecutor = (args: any) => Promise<string>;
+export type ToolHandler = (args: any) => Promise<string>;

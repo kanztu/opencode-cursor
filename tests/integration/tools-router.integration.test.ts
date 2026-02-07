@@ -1,23 +1,18 @@
 import { describe, it, expect } from "bun:test";
 import { ToolRouter } from "../../src/tools/router.js";
-import { OpenCodeToolExecutor } from "../../src/tools/executor.js";
 
 // A stub executor that just echoes args
-class StubExecutor extends OpenCodeToolExecutor {
-  constructor() {
-    super({}, { mode: "sdk" });
-  }
-  async execute(toolId: string, args: any) {
-    return { status: "success", output: JSON.stringify({ toolId, args }) };
-  }
-}
+const execute = async (toolId: string, args: any) => ({
+  status: "success",
+  output: JSON.stringify({ toolId, args }),
+});
 
 describe("ToolRouter integration", () => {
   it("handles a tool_call and returns a tool_result chunk", async () => {
     const toolsByName = new Map();
     toolsByName.set("oc_brainstorm", { id: "brainstorm", name: "oc_brainstorm", description: "", parameters: {} });
 
-    const router = new ToolRouter({ executor: new StubExecutor(), toolsByName });
+    const router = new ToolRouter({ execute, toolsByName });
     const event: any = {
       type: "tool_call",
       call_id: "call-1",

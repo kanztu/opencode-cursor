@@ -1,7 +1,6 @@
 import { createLogger } from "../utils/logger";
-import { OpenCodeToolExecutor } from "./executor";
-import { toOpenAiParameters, describeTool } from "./schema";
 import type { OpenCodeTool } from "./discovery";
+import type { ExecutionResult } from "./core/types.js";
 
 const log = createLogger("tools:router");
 
@@ -22,7 +21,7 @@ export interface ToolResultChunk {
 }
 
 export interface RouterContext {
-  executor: OpenCodeToolExecutor;
+  execute: (toolId: string, args: Record<string, unknown>) => Promise<ExecutionResult>;
   toolsByName: Map<string, OpenCodeTool>;
 }
 
@@ -48,7 +47,7 @@ export class ToolRouter {
     }
 
     const args = this.extractArgs(event);
-    const result = await this.ctx.executor.execute(tool.id, args);
+    const result = await this.ctx.execute(tool.id, args);
     return this.buildResult(meta, callId, name, result);
   }
 

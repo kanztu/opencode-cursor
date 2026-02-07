@@ -3,7 +3,7 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { chmodSync } from "node:fs";
-import { OpenCodeToolExecutor } from "../../src/tools/executor.js";
+import { CliExecutor } from "../../src/tools/executors/cli.js";
 
 // This test simulates CLI fallback by putting a mock `opencode` on PATH
 
@@ -28,7 +28,7 @@ exit 1
     const prevPath = process.env.PATH;
     process.env.PATH = `${tmp}:` + prevPath;
 
-    const exec = new OpenCodeToolExecutor({}, { mode: "cli", timeoutMs: 2000 });
+    const exec = new CliExecutor(2000);
     const res = await exec.execute("demo", { foo: "bar" });
 
     process.env.PATH = prevPath;

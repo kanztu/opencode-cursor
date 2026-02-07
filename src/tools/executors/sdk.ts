@@ -1,0 +1,30 @@
+import type { IToolExecutor, ExecutionResult } from "../core/types.js";
+
+export class SdkExecutor implements IToolExecutor {
+  constructor(private client: any, private timeoutMs: number) {}
+
+  canExecute(): boolean {
+    return Boolean(this.client?.tool?.invoke);
+  }
+
+  async execute(toolId: string, args: Record<string, unknown>): Promise<ExecutionResult> {
+    if (!this.canExecute()) return { status: "error", error: "SDK invoke unavailable" };
+    try {
+      const p = this.client.tool.invoke(toolId, args);
+      const res = await this.runWithTimeout(p);
+      const out = typeof res === "string" ? res : JSON.stringify(res);
+      return { status: "success", output: out };
+    } catch (err: any) {
+      return { status: "error", error: String(err?.message || err) };
+    }
+  }
+
+  private async runWithTimeout<T>(p: Promise<T>): Promise<T> {
+    if (!this.timeoutMs) return p;
+    return await Promise.race([
+      p,
+      new Promise<T>((_, reject) => setTimeout(() => reject(new Error("tool execution timeout")), this.timeoutMs)),
+    ]);
+  }
+}
+
