@@ -34,9 +34,12 @@ export function registerDefaultTools(registry: ToolRegistry): void {
     const execAsync = promisify(exec);
 
     try {
-      const { stdout, stderr } = await execAsync(args.command, {
-        timeout: args.timeout || 30000,
-        cwd: args.cwd
+      const command = args.command as string;
+      const timeout = args.timeout as number | undefined;
+      const cwd = args.cwd as string | undefined;
+      const { stdout, stderr } = await execAsync(command, {
+        timeout: timeout || 30000,
+        cwd: cwd
       });
       return stdout || stderr || "Command executed successfully";
     } catch (error: any) {
@@ -71,12 +74,15 @@ export function registerDefaultTools(registry: ToolRegistry): void {
   }, async (args) => {
     const fs = await import("fs");
     try {
-      let content = fs.readFileSync(args.path, "utf-8");
+      const path = args.path as string;
+      const offset = args.offset as number | undefined;
+      const limit = args.limit as number | undefined;
+      let content = fs.readFileSync(path, "utf-8");
 
-      if (args.offset !== undefined || args.limit !== undefined) {
+      if (offset !== undefined || limit !== undefined) {
         const lines = content.split("\n");
-        const start = args.offset || 0;
-        const end = args.limit ? start + args.limit : lines.length;
+        const start = offset || 0;
+        const end = limit ? start + limit : lines.length;
         content = lines.slice(start, end).join("\n");
       }
 
@@ -110,14 +116,16 @@ export function registerDefaultTools(registry: ToolRegistry): void {
     const fs = await import("fs");
     const path = await import("path");
     try {
+      const filePath = args.path as string;
+      const content = args.content as string;
       // Ensure directory exists
-      const dir = path.dirname(args.path);
+      const dir = path.dirname(filePath);
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
 
-      fs.writeFileSync(args.path, args.content, "utf-8");
-      return `File written successfully: ${args.path}`;
+      fs.writeFileSync(filePath, content, "utf-8");
+      return `File written successfully: ${filePath}`;
     } catch (error: any) {
       return `Error writing file: ${error.message}`;
     }
@@ -150,16 +158,19 @@ export function registerDefaultTools(registry: ToolRegistry): void {
   }, async (args) => {
     const fs = await import("fs");
     try {
-      let content = fs.readFileSync(args.path, "utf-8");
+      const path = args.path as string;
+      const oldString = args.old_string as string;
+      const newString = args.new_string as string;
+      let content = fs.readFileSync(path, "utf-8");
 
-      if (!content.includes(args.old_string)) {
-        return `Error: Could not find the text to replace in ${args.path}`;
+      if (!content.includes(oldString)) {
+        return `Error: Could not find the text to replace in ${path}`;
       }
 
-      content = content.replaceAll(args.old_string, args.new_string);
-      fs.writeFileSync(args.path, content, "utf-8");
+      content = content.replaceAll(oldString, newString);
+      fs.writeFileSync(path, content, "utf-8");
 
-      return `File edited successfully: ${args.path}`;
+      return `File edited successfully: ${path}`;
     } catch (error: any) {
       return `Error editing file: ${error.message}`;
     }
@@ -195,9 +206,12 @@ export function registerDefaultTools(registry: ToolRegistry): void {
     const execAsync = promisify(exec);
 
     try {
-      const includeFlag = args.include ? `--include="${args.include}"` : "";
+      const pattern = args.pattern as string;
+      const path = args.path as string;
+      const include = args.include as string | undefined;
+      const includeFlag = include ? `--include="${include}"` : "";
       const { stdout } = await execAsync(
-        `grep -r ${includeFlag} -n "${args.pattern}" "${args.path}" 2>/dev/null || true`,
+        `grep -r ${includeFlag} -n "${pattern}" "${path}" 2>/dev/null || true`,
         { timeout: 30000 }
       );
 
@@ -227,7 +241,8 @@ export function registerDefaultTools(registry: ToolRegistry): void {
     const fs = await import("fs");
     const path = await import("path");
     try {
-      const entries = fs.readdirSync(args.path, { withFileTypes: true });
+      const dirPath = args.path as string;
+      const entries = fs.readdirSync(dirPath, { withFileTypes: true });
 
       const result = entries.map(entry => {
         const type = entry.isDirectory() ? "d" :
@@ -268,9 +283,11 @@ export function registerDefaultTools(registry: ToolRegistry): void {
     const execAsync = promisify(exec);
 
     try {
-      const cwd = args.path || ".";
+      const pattern = args.pattern as string;
+      const path = args.path as string | undefined;
+      const cwd = path || ".";
       const { stdout } = await execAsync(
-        `find "${cwd}" -type f -name "${args.pattern}" 2>/dev/null | head -50`,
+        `find "${cwd}" -type f -name "${pattern}" 2>/dev/null | head -50`,
         { timeout: 30000 }
       );
 
