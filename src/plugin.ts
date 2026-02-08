@@ -726,6 +726,12 @@ export const CursorPlugin: Plugin = async ({ $, directory, client, serverUrl }: 
     toolsByName.clear();
     list.forEach((t) => toolsByName.set(t.name, t));
 
+    // Populate MCP executor with discovered SDK tool IDs
+    if (mcpExec) {
+      const sdkToolIds = list.filter((t) => t.source === "sdk").map((t) => t.id);
+      mcpExec.setToolIds(sdkToolIds);
+    }
+
     const toolEntries: any[] = [];
     const add = (name: string, t: any) => {
       toolEntries.push({
