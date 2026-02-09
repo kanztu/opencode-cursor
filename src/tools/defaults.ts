@@ -201,22 +201,28 @@ export function registerDefaultTools(registry: ToolRegistry): void {
     },
     source: "local" as const
   }, async (args) => {
-    const { exec } = await import("child_process");
+    const { execFile } = await import("child_process");
     const { promisify } = await import("util");
-    const execAsync = promisify(exec);
+    const execFileAsync = promisify(execFile);
+
+    const pattern = args.pattern as string;
+    const path = args.path as string;
+    const include = args.include as string | undefined;
+
+    const grepArgs = ["-r", "-n"];
+    if (include) {
+      grepArgs.push(`--include=${include}`);
+    }
+    grepArgs.push(pattern, path);
 
     try {
-      const pattern = args.pattern as string;
-      const path = args.path as string;
-      const include = args.include as string | undefined;
-      const includeFlag = include ? `--include="${include}"` : "";
-      const { stdout } = await execAsync(
-        `grep -r ${includeFlag} -n "${pattern}" "${path}" 2>/dev/null || true`,
-        { timeout: 30000 }
-      );
-
+      const { stdout } = await execFileAsync("grep", grepArgs, { timeout: 30000 });
       return stdout || "No matches found";
     } catch (error: any) {
+      // grep exits with code 1 when no matches found — not an error
+      if (error.code === 1) {
+        return "No matches found";
+      }
       throw error;
     }
   });
@@ -278,20 +284,22 @@ export function registerDefaultTools(registry: ToolRegistry): void {
     },
     source: "local" as const
   }, async (args) => {
-    const { exec } = await import("child_process");
+    const { execFile } = await import("child_process");
     const { promisify } = await import("util");
-    const execAsync = promisify(exec);
+    const execFileAsync = promisify(execFile);
+
+    const pattern = args.pattern as string;
+    const path = args.path as string | undefined;
+    const cwd = path || ".";
 
     try {
-      const pattern = args.pattern as string;
-      const path = args.path as string | undefined;
-      const cwd = path || ".";
-      const { stdout } = await execAsync(
-        `find "${cwd}" -type f -name "${pattern}" 2>/dev/null | head -50`,
+      const { stdout } = await execFileAsync(
+        "find", [cwd, "-type", "f", "-name", pattern],
         { timeout: 30000 }
       );
-
-      return stdout || "No files found";
+      // Limit output to 50 lines (replaces piped `| head -50`)
+      const lines = (stdout || "").split("\n").filter(Boolean);
+      return lines.slice(0, 50).join("\n") || "No files found";
     } catch (error: any) {
       throw error;
     }

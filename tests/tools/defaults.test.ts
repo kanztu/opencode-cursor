@@ -142,4 +142,38 @@ describe("Default Tools", () => {
       expect(tool.source).toBe("local");
     }
   });
+
+  it("should execute grep tool safely with special characters in pattern", async () => {
+    const registry = new ToolRegistry();
+    registerDefaultTools(registry);
+    const executor = new LocalExecutor(registry);
+
+    const fs = await import("fs");
+    const tmpFile = `/tmp/test-grep-${Date.now()}.txt`;
+    fs.writeFileSync(tmpFile, "hello world\nfoo bar\n", "utf-8");
+
+    const result = await executeWithChain([executor], "grep", {
+      pattern: "hello",
+      path: tmpFile
+    });
+
+    expect(result.status).toBe("success");
+    expect(result.output).toContain("hello world");
+
+    fs.unlinkSync(tmpFile);
+  });
+
+  it("should execute glob tool safely", async () => {
+    const registry = new ToolRegistry();
+    registerDefaultTools(registry);
+    const executor = new LocalExecutor(registry);
+
+    const result = await executeWithChain([executor], "glob", {
+      pattern: "*.ts",
+      path: "src/tools"
+    });
+
+    expect(result.status).toBe("success");
+    expect(result.output).toContain(".ts");
+  });
 });
