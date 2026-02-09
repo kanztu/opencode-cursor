@@ -791,7 +791,7 @@ function buildToolHookEntries(registry: CoreRegistry): Record<string, any> {
  * OpenCode plugin for Cursor Agent
  */
 export const CursorPlugin: Plugin = async ({ $, directory, client, serverUrl }: PluginInput) => {
-  log.debug("Plugin initializing", { directory });
+  log.debug("Plugin initializing", { directory, serverUrl: serverUrl?.toString() });
   await ensurePluginDirectory();
 
   // Tools (skills) discovery/execution wiring
@@ -799,7 +799,7 @@ export const CursorPlugin: Plugin = async ({ $, directory, client, serverUrl }: 
   // forwardToolCalls uses the module-level FORWARD_TOOL_CALLS constant (line 53)
   // Build a client with serverUrl so SDK tool.list works even if the injected client isn't fully configured.
   const serverClient = toolsEnabled
-    ? createOpencodeClient({ serverUrl: serverUrl.toString(), directory })
+    ? createOpencodeClient({ baseUrl: serverUrl.toString(), directory })
     : null;
   const discovery = toolsEnabled ? new OpenCodeToolDiscovery(serverClient ?? client) : null;
 
@@ -831,22 +831,8 @@ export const CursorPlugin: Plugin = async ({ $, directory, client, serverUrl }: 
   let lastToolMap: Array<{ id: string; name: string }> = [];
 
   async function refreshTools() {
-    if (!discovery || !router) return [];
-    const list = await discovery.listTools();
+    if (!router) return [];
     toolsByName.clear();
-    list.forEach((t) => toolsByName.set(t.name, t));
-
-    // Load skills and initialize resolver for alias resolution
-    const skills = skillLoader.load(list);
-    skillResolver = new SkillResolver(skills);
-
-    // Populate executors with their respective tool IDs
-    if (sdkExec) {
-      sdkExec.setToolIds(list.filter((t) => t.source === "sdk").map((t) => t.id));
-    }
-    if (mcpExec) {
-      mcpExec.setToolIds(list.filter((t) => t.source === "mcp").map((t) => t.id));
-    }
 
     const toolEntries: any[] = [];
     const add = (name: string, t: any) => {
@@ -863,7 +849,38 @@ export const CursorPlugin: Plugin = async ({ $, directory, client, serverUrl }: 
       });
     };
 
-    for (const t of list) {
+    // Always include local tools — these work regardless of SDK connectivity
+    for (const t of localRegistry.list()) {
+      const nsName = `oc_${t.id}`;
+      const asTool = { ...t, name: nsName };
+      add(nsName, asTool);
+    }
+
+    // Layer SDK/MCP-discovered tools on top (best-effort)
+    let discoveredList: any[] = [];
+    if (discovery) {
+      try {
+        discoveredList = await discovery.listTools();
+        discoveredList.forEach((t) => toolsByName.set(t.name, t));
+      } catch (err) {
+        log.debug("Tool discovery failed, using local tools only", { error: String(err) });
+      }
+    }
+
+    // Load skills and initialize resolver for alias resolution
+    const allTools = [...localRegistry.list().map((t) => ({ ...t, name: `oc_${t.id}` })), ...discoveredList];
+    const skills = skillLoader.load(allTools);
+    skillResolver = new SkillResolver(skills);
+
+    // Populate executors with their respective tool IDs
+    if (sdkExec) {
+      sdkExec.setToolIds(discoveredList.filter((t) => t.source === "sdk").map((t) => t.id));
+    }
+    if (mcpExec) {
+      mcpExec.setToolIds(discoveredList.filter((t) => t.source === "mcp").map((t) => t.id));
+    }
+
+    for (const t of discoveredList) {
       add(t.name, t);
 
       if (t.name === "bash" && !toolsByName.has("shell")) {
@@ -880,7 +897,8 @@ export const CursorPlugin: Plugin = async ({ $, directory, client, serverUrl }: 
     }
 
     lastToolNames = toolEntries.map((e) => e.function.name);
-    lastToolMap = list.map((t) => ({ id: t.id, name: t.name }));
+    lastToolMap = allTools.map((t) => ({ id: t.id, name: t.name }));
+    log.debug("Tools refreshed", { local: localRegistry.list().length, discovered: discoveredList.length, total: toolEntries.length });
     return toolEntries;
   }
 
