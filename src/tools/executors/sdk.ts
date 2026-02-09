@@ -1,4 +1,7 @@
 import type { IToolExecutor, ExecutionResult } from "../core/types.js";
+import { createLogger } from "../../utils/logger.js";
+
+const log = createLogger("tools:executor:sdk");
 
 export class SdkExecutor implements IToolExecutor {
   constructor(private client: any, private timeoutMs: number) {}
@@ -15,6 +18,7 @@ export class SdkExecutor implements IToolExecutor {
       const out = typeof res === "string" ? res : JSON.stringify(res);
       return { status: "success", output: out };
     } catch (err: any) {
+      log.warn("SDK tool execution failed", { toolId, error: String(err?.message || err) });
       return { status: "error", error: String(err?.message || err) };
     }
   }
@@ -27,4 +31,3 @@ export class SdkExecutor implements IToolExecutor {
     ]);
   }
 }
-

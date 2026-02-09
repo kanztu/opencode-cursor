@@ -1,4 +1,7 @@
 import type { IToolExecutor, ExecutionResult } from "../core/types.js";
+import { createLogger } from "../../utils/logger.js";
+
+const log = createLogger("tools:executor:mcp");
 
 export class McpExecutor implements IToolExecutor {
   private toolIds = new Set<string>();
@@ -21,6 +24,7 @@ export class McpExecutor implements IToolExecutor {
       const out = typeof res === "string" ? res : JSON.stringify(res);
       return { status: "success", output: out };
     } catch (err: any) {
+      log.warn("MCP tool execution failed", { toolId, error: String(err?.message || err) });
       return { status: "error", error: String(err?.message || err) };
     }
   }
