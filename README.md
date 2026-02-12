@@ -15,17 +15,9 @@ No prompt limits. No broken streams. Full thinking + tool support in Opencode. Y
 curl -fsSL https://raw.githubusercontent.com/Nomadcxx/opencode-cursor/main/install.sh | bash
 ```
 
-Note: if `npm` is available, `install.sh` installs/upgrades `@rama_nigg/open-cursor` and runs `open-cursor install`. Otherwise it falls back to building from source.
+Note: if `npm` is available, `install.sh` installs/upgrades `@rama_nigg/open-cursor` and configures OpenCode automatically. Otherwise it falls back to building from source.
 
-**Option B: npm Package (Use when published)**
-
-Check whether the package is available on npm first:
-
-```bash
-npm view @rama_nigg/open-cursor version
-```
-
-If that returns a version, install with:
+**Option B: npm Package (Recommended)**
 
 ```bash
 npm install -g @rama_nigg/open-cursor
@@ -38,8 +30,6 @@ Upgrade later with:
 npm update -g @rama_nigg/open-cursor
 open-cursor sync-models
 ```
-
-If `npm view` returns `404 Not Found`, the release has not been published yet. Use Option A, C, or E.
 
 **Option C: TUI Installer**
 
@@ -56,32 +46,28 @@ Paste this into any LLM agent (Claude Code, OpenCode, Cursor, etc.):
 ```
 Install the cursor-acp plugin for OpenCode:
 
-1. Clone and build:
+1. Preferred install (npm):
+   npm install -g @rama_nigg/open-cursor
+   open-cursor install
+
+2. Fallback (build from source):
    git clone https://github.com/Nomadcxx/opencode-cursor.git
    cd opencode-cursor
    bun install && bun run build
-
-2. Create plugin symlink:
    mkdir -p ~/.config/opencode/plugin
    ln -sf $(pwd)/dist/plugin-entry.js ~/.config/opencode/plugin/cursor-acp.js
+   ./scripts/sync-models.sh
 
-3. Get available models:
-   cursor-agent models
-
-4. Add to ~/.config/opencode/opencode.json - merge with existing config:
-   - Add "cursor-acp" to the "plugin" array
-   - Add a "cursor-acp" provider with models from step 3
-   - Set npm to "@ai-sdk/openai-compatible"
-   - Set options.baseURL to "http://127.0.0.1:32124/v1"
-
-5. Verify: opencode models | grep cursor
+3. Verify:
+   opencode models | grep cursor-acp
 ```
 
 **Option E: Manual Install**
 
 ```bash
 bun install && bun run build
-ln -s $(pwd)/dist/plugin-entry.js ~/.config/opencode/plugin/cursor-acp.js
+mkdir -p ~/.config/opencode/plugin
+ln -sf $(pwd)/dist/plugin-entry.js ~/.config/opencode/plugin/cursor-acp.js
 ```
 
 The installers handle the rest automatically. If you're doing a manual install, you'll need to do the following steps yourself.
@@ -92,7 +78,7 @@ Easiest way is to run the sync script, which populates everything for you:
 ./scripts/sync-models.sh
 ```
 
-Or if you'd rather do it by hand, add this to `~/.config/opencode/opencode.json`:
+Or if you'd rather do it by hand, add this to `~/.config/opencode/opencode.json` (then run `./scripts/sync-models.sh` to populate models):
 
 ```json
 {
@@ -103,39 +89,7 @@ Or if you'd rather do it by hand, add this to `~/.config/opencode/opencode.json`
       "npm": "@ai-sdk/openai-compatible",
       "options": { "baseURL": "http://127.0.0.1:32124/v1" },
       "models": {
-        "auto": { "name": "Auto" },
-        "composer-1.5": { "name": "Composer 1.5" },
-        "composer-1": { "name": "Composer 1" },
-        "gpt-5.3-codex": { "name": "GPT-5.3 Codex" },
-        "gpt-5.3-codex-low": { "name": "GPT-5.3 Codex Low" },
-        "gpt-5.3-codex-high": { "name": "GPT-5.3 Codex High" },
-        "gpt-5.3-codex-xhigh": { "name": "GPT-5.3 Codex Extra High" },
-        "gpt-5.3-codex-fast": { "name": "GPT-5.3 Codex Fast" },
-        "gpt-5.3-codex-low-fast": { "name": "GPT-5.3 Codex Low Fast" },
-        "gpt-5.3-codex-high-fast": { "name": "GPT-5.3 Codex High Fast" },
-        "gpt-5.3-codex-xhigh-fast": { "name": "GPT-5.3 Codex Extra High Fast" },
-        "gpt-5.2": { "name": "GPT-5.2" },
-        "gpt-5.2-codex": { "name": "GPT-5.2 Codex" },
-        "gpt-5.2-codex-high": { "name": "GPT-5.2 Codex High" },
-        "gpt-5.2-codex-low": { "name": "GPT-5.2 Codex Low" },
-        "gpt-5.2-codex-xhigh": { "name": "GPT-5.2 Codex Extra High" },
-        "gpt-5.2-codex-fast": { "name": "GPT-5.2 Codex Fast" },
-        "gpt-5.2-codex-high-fast": { "name": "GPT-5.2 Codex High Fast" },
-        "gpt-5.2-codex-low-fast": { "name": "GPT-5.2 Codex Low Fast" },
-        "gpt-5.2-codex-xhigh-fast": { "name": "GPT-5.2 Codex Extra High Fast" },
-        "gpt-5.1-codex-max": { "name": "GPT-5.1 Codex Max" },
-        "gpt-5.1-codex-max-high": { "name": "GPT-5.1 Codex Max High" },
-        "opus-4.6-thinking": { "name": "Claude 4.6 Opus (Thinking)" },
-        "sonnet-4.5-thinking": { "name": "Claude 4.5 Sonnet (Thinking)" },
-        "gpt-5.2-high": { "name": "GPT-5.2 High" },
-        "opus-4.6": { "name": "Claude 4.6 Opus" },
-        "opus-4.5": { "name": "Claude 4.5 Opus" },
-        "opus-4.5-thinking": { "name": "Claude 4.5 Opus (Thinking)" },
-        "sonnet-4.5": { "name": "Claude 4.5 Sonnet" },
-        "gpt-5.1-high": { "name": "GPT-5.1 High" },
-        "gemini-3-pro": { "name": "Gemini 3 Pro" },
-        "gemini-3-flash": { "name": "Gemini 3 Flash" },
-        "grok": { "name": "Grok" }
+        "auto": { "name": "Auto" }
       }
     }
   }
@@ -186,7 +140,13 @@ open-cursor sync-models
 
 ## Models
 
-Models are pulled from `cursor-agent models` and written to your config during installation. If Cursor adds new models later, re-run:
+Models are pulled from `cursor-agent models` and written to your config during installation. If Cursor adds new models later:
+
+```bash
+open-cursor sync-models
+```
+
+Or, if you installed from source (no npm CLI):
 
 ```bash
 ./scripts/sync-models.sh

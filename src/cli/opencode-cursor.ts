@@ -12,7 +12,7 @@ import {
   writeFileSync,
 } from "fs";
 import { homedir } from "os";
-import { dirname, join, resolve } from "path";
+import { basename, dirname, join, resolve } from "path";
 import { fileURLToPath } from "url";
 import {
   discoverModelsFromCursorAgent,
@@ -34,14 +34,15 @@ const PROVIDER_ID = "cursor-acp";
 const DEFAULT_BASE_URL = "http://127.0.0.1:32124/v1";
 
 function printHelp() {
-  console.log(`opencode-cursor
+  const binName = basename(process.argv[1] || "open-cursor");
+  console.log(`${binName}
 
 Usage:
-  opencode-cursor install [--config <path>] [--plugin-dir <path>] [--base-url <url>] [--copy] [--skip-models] [--no-backup]
-  opencode-cursor sync-models [--config <path>] [--no-backup]
-  opencode-cursor uninstall [--config <path>] [--plugin-dir <path>] [--no-backup]
-  opencode-cursor status [--config <path>] [--plugin-dir <path>]
-  opencode-cursor help
+  ${binName} install [--config <path>] [--plugin-dir <path>] [--base-url <url>] [--copy] [--skip-models] [--no-backup]
+  ${binName} sync-models [--config <path>] [--no-backup]
+  ${binName} uninstall [--config <path>] [--plugin-dir <path>] [--no-backup]
+  ${binName} status [--config <path>] [--plugin-dir <path>]
+  ${binName} help
 `);
 }
 
