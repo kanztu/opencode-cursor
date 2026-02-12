@@ -12,6 +12,8 @@ type ToolLoopErrorClass =
 const UNKNOWN_AS_SUCCESS_TOOLS = new Set([
   "bash",
   "read",
+  "write",
+  "edit",
   "grep",
   "ls",
   "glob",
@@ -231,6 +233,13 @@ function indexToolLoopHistory(messages: Array<unknown>): {
         initialCounts,
         `${call.name}|values:${call.argValueSignature}|success`,
       );
+      const coarseSuccessFP = deriveSuccessCoarseFingerprint(
+        call.name,
+        call.rawArguments,
+      );
+      if (coarseSuccessFP) {
+        incrementCount(initialCoarseCounts, coarseSuccessFP);
+      }
       continue;
     }
     const strictFingerprint = `${call.name}|${call.argShape}|${errorClass}`;
@@ -247,6 +256,41 @@ function indexToolLoopHistory(messages: Array<unknown>): {
       `${call.name}|schema:${schemaSignature}|validation`,
     );
     incrementCount(initialValidationCoarseCounts, `${call.name}|validation`);
+  }
+
+  // OpenCode strips tool_calls from older assistant messages in the conversation
+  // history, keeping only the latest round's tool_calls.  Stripped messages appear
+  // as role="assistant" with no tool_calls and empty content.  Each one represents
+  // a prior tool-call round whose details are lost.  Boost coarse success counts
+  // using these as evidence of prior rounds so the guard can still detect loops.
+  const strippedRounds = countStrippedAssistantRounds(messages);
+  if (strippedRounds > 0 && assistantCalls.length > 0) {
+    // Use the latest round's tool calls to extrapolate what prior rounds looked like.
+    // For coarse success fingerprints this is sufficient because the fingerprint only
+    // uses the tool name + path hash, and the model is repeating the same operation.
+    for (const call of assistantCalls) {
+      const errorClass = normalizeErrorClassForTool(
+        call.name,
+        byCallId.get(call.id) ?? latestByToolName.get(call.name) ?? latest ?? "unknown",
+      );
+      if (errorClass !== "success") {
+        continue;
+      }
+      const coarseSuccessFP = deriveSuccessCoarseFingerprint(
+        call.name,
+        call.rawArguments,
+      );
+      if (coarseSuccessFP) {
+        for (let i = 0; i < strippedRounds; i++) {
+          incrementCount(initialCoarseCounts, coarseSuccessFP);
+        }
+      }
+      // Also boost value-signature counts for identical repeats.
+      const successFP = `${call.name}|values:${call.argValueSignature}|success`;
+      for (let i = 0; i < strippedRounds; i++) {
+        incrementCount(initialCounts, successFP);
+      }
+    }
   }
 
   return {
@@ -355,6 +399,7 @@ function deriveSuccessCoarseFingerprint(toolName: string, rawArguments: string):
 function extractAssistantToolCalls(messages: Array<unknown>): Array<{
   id: string;
   name: string;
+  rawArguments: string;
   argShape: string;
   argValueSignature: string;
   argKeys: string[];
@@ -362,6 +407,7 @@ function extractAssistantToolCalls(messages: Array<unknown>): Array<{
   const calls: Array<{
     id: string;
     name: string;
+    rawArguments: string;
     argShape: string;
     argValueSignature: string;
     argKeys: string[];
@@ -385,6 +431,7 @@ function extractAssistantToolCalls(messages: Array<unknown>): Array<{
       calls.push({
         id,
         name,
+        rawArguments,
         argShape: deriveArgumentShape(rawArguments),
         argValueSignature: deriveArgumentValueSignature(rawArguments),
         argKeys: extractArgumentKeys(rawArguments),
@@ -519,6 +566,34 @@ function normalizeErrorClassForTool(
     return "success";
   }
   return errorClass;
+}
+
+/**
+ * Count assistant messages that had their tool_calls stripped by OpenCode.
+ * These appear as role="assistant" with no tool_calls array and empty/null content,
+ * positioned before an assistant message that still has tool_calls.
+ */
+function countStrippedAssistantRounds(messages: Array<unknown>): number {
+  let count = 0;
+  for (const message of messages) {
+    if (!isRecord(message) || message.role !== "assistant") {
+      continue;
+    }
+    if (Array.isArray(message.tool_calls) && message.tool_calls.length > 0) {
+      continue;
+    }
+    // An assistant message with no tool_calls and empty content is likely a
+    // stripped prior round.  Messages with substantial text content are normal
+    // assistant responses (not stripped tool-call rounds).
+    const content = message.content;
+    const hasContent =
+      (typeof content === "string" && content.trim().length > 0)
+      || (Array.isArray(content) && content.length > 0);
+    if (!hasContent) {
+      count++;
+    }
+  }
+  return count;
 }
 
 function toLowerText(content: unknown): string {

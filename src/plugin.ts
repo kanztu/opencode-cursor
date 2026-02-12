@@ -452,12 +452,19 @@ async function ensureCursorProxyServer(workspaceDirectory: string, toolRouter?: 
       const model = boundaryContext.run("normalizeRuntimeModel", (boundary) =>
         boundary.normalizeRuntimeModel(body?.model),
       );
+      const msgSummaryBun = messages.map((m: any, i: number) => {
+        const role = m?.role ?? "?";
+        const hasTc = Array.isArray(m?.tool_calls) ? m.tool_calls.length : 0;
+        const clen = typeof m?.content === "string" ? m.content.length : Array.isArray(m?.content) ? `arr${(m.content as any[]).length}` : typeof m?.content;
+        return `${i}:${role}${hasTc ? `(tc:${hasTc})` : ""}(clen:${clen})`;
+      });
       log.debug("Proxy chat request (bun)", {
         stream,
         model,
         messages: messages.length,
         tools: tools.length,
         promptChars: prompt.length,
+        msgRoles: msgSummaryBun.join(","),
       });
 
       const bunAny = globalThis as any;
@@ -878,12 +885,21 @@ async function ensureCursorProxyServer(workspaceDirectory: string, toolRouter?: 
       const model = boundaryContext.run("normalizeRuntimeModel", (boundary) =>
         boundary.normalizeRuntimeModel(bodyData?.model),
       );
+      const msgSummary = messages.map((m: any, i: number) => {
+        const role = m?.role ?? "?";
+        const hasTc = Array.isArray(m?.tool_calls) ? m.tool_calls.length : 0;
+        const tcId = m?.tool_call_id ? "yes" : "no";
+        const tcName = m?.name ?? "";
+        const contentLen = typeof m?.content === "string" ? m.content.length : Array.isArray(m?.content) ? `arr${m.content.length}` : typeof m?.content;
+        return `${i}:${role}${hasTc ? `(tc:${hasTc})` : ""}${role === "tool" ? `(tcid:${tcId},name:${tcName},clen:${contentLen})` : `(clen:${contentLen})`}`;
+      });
       log.debug("Proxy chat request (node)", {
         stream,
         model,
         messages: messages.length,
         tools: tools.length,
         promptChars: prompt.length,
+        msgRoles: msgSummary.join(","),
       });
 
       const cmd = [
