@@ -215,6 +215,74 @@ describe("proxy/tool-loop", () => {
     expect(call?.function.name).toBe("glob");
   });
 
+  it("maps callOmoAgent alias to allowed call_omo_agent tool name", () => {
+    const event: any = {
+      type: "tool_call",
+      call_id: "call_subagent_alias",
+      name: "callOmoAgent",
+      tool_call: {
+        callOmoAgent: {
+          args: { task: "summarize" },
+        },
+      },
+    };
+
+    const call = extractOpenAiToolCall(event, new Set(["call_omo_agent"]));
+    expect(call).not.toBeNull();
+    expect(call?.function.name).toBe("call_omo_agent");
+  });
+
+  it("maps delegateTask alias to allowed task tool name", () => {
+    const event: any = {
+      type: "tool_call",
+      call_id: "call_task_alias",
+      name: "delegateTask",
+      tool_call: {
+        delegateTask: {
+          args: { prompt: "analyze codebase" },
+        },
+      },
+    };
+
+    const call = extractOpenAiToolCall(event, new Set(["task"]));
+    expect(call).not.toBeNull();
+    expect(call?.function.name).toBe("task");
+  });
+
+  it("maps runSkill alias to allowed skill tool name", () => {
+    const event: any = {
+      type: "tool_call",
+      call_id: "call_skill_alias",
+      name: "runSkill",
+      tool_call: {
+        runSkill: {
+          args: { skill: "superpowers/brainstorming" },
+        },
+      },
+    };
+
+    const call = extractOpenAiToolCall(event, new Set(["skill"]));
+    expect(call).not.toBeNull();
+    expect(call?.function.name).toBe("skill");
+  });
+
+  it("maps skillMcp alias to allowed skill_mcp tool name", () => {
+    const event: any = {
+      type: "tool_call",
+      call_id: "call_skill_mcp_alias",
+      name: "skillMcp",
+      tool_call: {
+        skillMcp: {
+          args: { server: "context7", action: "list" },
+        },
+      },
+    };
+
+    const call = extractOpenAiToolCall(event, new Set(["skill_mcp"]));
+    expect(call).not.toBeNull();
+    expect(call?.function.name).toBe("skill_mcp");
+  });
+
   it("builds valid non-stream tool call response", () => {
     const response = createToolCallCompletionResponse(
       { id: "resp-1", created: 123, model: "cursor-acp/auto" },

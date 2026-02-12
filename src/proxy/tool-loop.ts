@@ -74,6 +74,22 @@ const TOOL_NAME_ALIASES = new Map<string, string>([
   ["readtodostoolcall", "todoread"],
   ["todoread", "todoread"],
   ["todoreadtoolcall", "todoread"],
+  // sub-agent and delegation aliases
+  ["callomoagent", "call_omo_agent"],
+  ["callagent", "call_omo_agent"],
+  ["invokeagent", "call_omo_agent"],
+  ["delegatetask", "task"],
+  ["delegate", "task"],
+  ["runtask", "task"],
+  ["subagent", "task"],
+  // skill aliases
+  ["useskill", "skill"],
+  ["invokeskill", "skill"],
+  ["runskill", "skill"],
+  ["skillmcp", "skill_mcp"],
+  ["mcp_skill", "skill_mcp"],
+  ["runmcpskill", "skill_mcp"],
+  ["invokeskillmcp", "skill_mcp"],
 ]);
 
 export function extractAllowedToolNames(tools: Array<any>): Set<string> {
