@@ -5,17 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.1.5] - 2026-02-12
+## [2.1.7] - 2026-02-13
+
+### Fixed
+- Tool loop guard now detects repeated successful `edit`/`write` loops (including coarse path-based repeats) while reducing false positives.
+- Schema-validation loop-guard history is now seeded from tool-call shapes even when tool result messages are missing/truncated.
+- SSE streaming conversion now emits assistant text deltas from both partial and non-partial assistant events.
+- Proxy port selection now probes for an actually-bindable port, avoiding reliance on incomplete `ss`/`lsof` output.
 
 ### Changed
-- Clarified npm install instructions and removed “check npm view first” from README.
-- CLI help output now matches the invoked binary name (`open-cursor`).
+- Plugin directory initialization now respects `XDG_CONFIG_HOME` (creates `opencode/plugin` under the configured XDG config home).
 
 ## [2.1.6] - 2026-02-12
 
 ### Changed
 - README now uses `npm exec -- @rama_nigg/open-cursor ...` examples to avoid PATH issues with global npm bin.
 - Removed README references to `open-cursor sync-models` and `open-cursor status` (use `install` to resync models).
+
+## [2.1.5] - 2026-02-12
+
+### Changed
+- Clarified npm install instructions and removed “check npm view first” from README.
+- CLI help output now matches the invoked binary name (`open-cursor`).
 
 ## [2.1.4] - 2026-02-12
 
