@@ -1,5 +1,5 @@
 import type { ToolUpdate, ToolMapper } from "../acp/tools.js";
-import { extractOpenAiToolCall, type OpenAiToolCall } from "../proxy/tool-loop.js";
+import { extractOpenAiToolCall, type OpenAiToolCall, type ToolCallExtractionResult } from "../proxy/tool-loop.js";
 import type { StreamJsonToolCallEvent } from "../streaming/types.js";
 import type { ToolRouter } from "../tools/router.js";
 import { createLogger } from "../utils/logger.js";
@@ -7,6 +7,7 @@ import { applyToolSchemaCompat, type ToolSchemaValidationResult } from "./tool-s
 import type { ToolLoopGuard } from "./tool-loop-guard.js";
 import type { ProviderBoundaryMode, ToolLoopMode } from "./boundary.js";
 import type { ProviderBoundary } from "./boundary.js";
+import type { PassThroughTracker } from "./passthrough-tracker.js";
 
 const log = createLogger("provider:runtime-interception");
 
@@ -26,6 +27,7 @@ interface HandleToolLoopEventBaseOptions {
   onToolUpdate: (update: ToolUpdate) => Promise<void> | void;
   onToolResult: (toolResult: any) => Promise<void> | void;
   onInterceptedToolCall: (toolCall: OpenAiToolCall) => Promise<void> | void;
+  passThroughTracker?: PassThroughTracker;
 }
 
 export interface HandleToolLoopEventLegacyOptions extends HandleToolLoopEventBaseOptions {}
@@ -115,12 +117,48 @@ export async function handleToolLoopEventLegacy(
     onToolUpdate,
     onToolResult,
     onInterceptedToolCall,
+    passThroughTracker,
   } = options;
 
-  const interceptedToolCall =
+  const extraction =
     toolLoopMode === "opencode"
       ? extractOpenAiToolCall(event as any, allowedToolNames)
-      : null;
+      : { action: "skip" as const, skipReason: "tool_loop_mode_not_opencode" };
+
+  // Handle pass-through: unknown tools go to cursor-agent
+  if (extraction.action === "passthrough") {
+    passThroughTracker?.trackTool(extraction.passthroughName!);
+    log.debug("MCP tool passed through to cursor-agent (legacy)", {
+      tool: extraction.passthroughName,
+    });
+    return { intercepted: false, skipConverter: false };
+  }
+
+  // Handle skip: no tool to intercept
+  if (extraction.action === "skip" || !extraction.toolCall) {
+    const updates = await toolMapper.mapCursorEventToAcp(
+      event,
+      event.session_id ?? toolSessionId,
+    );
+
+    if (shouldEmitToolUpdates) {
+      for (const update of updates) {
+        await onToolUpdate(update);
+      }
+    }
+
+    if (toolRouter && proxyExecuteToolCalls) {
+      const toolResult = await toolRouter.handleToolCall(event as any, responseMeta);
+      if (toolResult) {
+        await onToolResult(toolResult);
+      }
+    }
+
+    return { intercepted: false, skipConverter: suppressConverterToolEvents };
+  }
+
+  // Handle intercept: known OpenCode tool
+  const interceptedToolCall = extraction.toolCall;
   if (interceptedToolCall) {
     const compat = applyToolSchemaCompat(interceptedToolCall, toolSchemaMap);
     let normalizedToolCall = compat.toolCall;
@@ -224,11 +262,12 @@ export async function handleToolLoopEventV1(
     onToolUpdate,
     onToolResult,
     onInterceptedToolCall,
+    passThroughTracker,
   } = options;
 
-  let interceptedToolCall: OpenAiToolCall | null;
+  let extraction: ToolCallExtractionResult;
   try {
-    interceptedToolCall = boundary.maybeExtractToolCall(
+    extraction = boundary.maybeExtractToolCall(
       event,
       allowedToolNames,
       toolLoopMode,
@@ -236,140 +275,153 @@ export async function handleToolLoopEventV1(
   } catch (error) {
     throw new ToolBoundaryExtractionError("Boundary tool extraction failed", error);
   }
-  if (interceptedToolCall) {
-    const compat = applyToolSchemaCompat(interceptedToolCall, toolSchemaMap);
-    interceptedToolCall = compat.toolCall;
-    const editDiag =
-      interceptedToolCall.function.name.toLowerCase() === "edit"
-        ? {
-            rawArgs: safeArgTypeSummary(event),
-            normalizedArgs: compat.normalizedArgs,
-          }
-        : undefined;
-    log.debug("Applied tool schema compatibility", {
-      tool: interceptedToolCall.function.name,
-      originalArgKeys: compat.originalArgKeys,
-      normalizedArgKeys: compat.normalizedArgKeys,
-      collisionKeys: compat.collisionKeys,
-      validationOk: compat.validation.ok,
-      ...(editDiag ? { editDiag } : {}),
+
+  // Handle pass-through: unknown tools go to cursor-agent
+  if (extraction.action === "passthrough") {
+    passThroughTracker?.trackTool(extraction.passthroughName!);
+    log.debug("MCP tool passed through to cursor-agent (v1)", {
+      tool: extraction.passthroughName,
     });
-    if (compat.validation.hasSchema && !compat.validation.ok) {
-      log.debug("Tool schema compatibility validation failed", {
-        tool: interceptedToolCall.function.name,
+    return { intercepted: false, skipConverter: false };
+  }
+
+  // Handle skip: no tool to intercept
+  if (extraction.action === "skip" || !extraction.toolCall) {
+    const updates = await toolMapper.mapCursorEventToAcp(
+      event,
+      event.session_id ?? toolSessionId,
+    );
+
+    if (shouldEmitToolUpdates) {
+      for (const update of updates) {
+        await onToolUpdate(update);
+      }
+    }
+
+    if (toolRouter && proxyExecuteToolCalls) {
+      const toolResult = await toolRouter.handleToolCall(event as any, responseMeta);
+      if (toolResult) {
+        await onToolResult(toolResult);
+      }
+    }
+
+    return { intercepted: false, skipConverter: suppressConverterToolEvents };
+  }
+
+  // Handle intercept: known OpenCode tool
+  const interceptedToolCall = extraction.toolCall;
+  const compat = applyToolSchemaCompat(interceptedToolCall, toolSchemaMap);
+  let normalizedToolCall = compat.toolCall;
+  const editDiag =
+    normalizedToolCall.function.name.toLowerCase() === "edit"
+      ? {
+          rawArgs: safeArgTypeSummary(event),
+          normalizedArgs: compat.normalizedArgs,
+        }
+      : undefined;
+  log.debug("Applied tool schema compatibility", {
+    tool: normalizedToolCall.function.name,
+    originalArgKeys: compat.originalArgKeys,
+    normalizedArgKeys: compat.normalizedArgKeys,
+    collisionKeys: compat.collisionKeys,
+    validationOk: compat.validation.ok,
+    ...(editDiag ? { editDiag } : {}),
+  });
+  if (compat.validation.hasSchema && !compat.validation.ok) {
+    log.debug("Tool schema compatibility validation failed", {
+      tool: normalizedToolCall.function.name,
+      missing: compat.validation.missing,
+      unexpected: compat.validation.unexpected,
+      typeErrors: compat.validation.typeErrors,
+      repairHint: compat.validation.repairHint,
+    });
+    const validationTermination = evaluateSchemaValidationLoopGuard(
+      toolLoopGuard,
+      normalizedToolCall,
+      compat.validation,
+    );
+    if (validationTermination) {
+      return { intercepted: false, skipConverter: true, terminate: validationTermination };
+    }
+    const termination = evaluateToolLoopGuard(toolLoopGuard, normalizedToolCall);
+    if (termination) {
+      return { intercepted: false, skipConverter: true, terminate: termination };
+    }
+    const reroutedWrite = tryRerouteEditToWrite(
+      normalizedToolCall,
+      compat.normalizedArgs,
+      allowedToolNames,
+      toolSchemaMap,
+    );
+    if (reroutedWrite) {
+      log.debug("Rerouting malformed edit call to write", {
+        path: reroutedWrite.path,
         missing: compat.validation.missing,
-        unexpected: compat.validation.unexpected,
         typeErrors: compat.validation.typeErrors,
-        repairHint: compat.validation.repairHint,
       });
-      const validationTermination = evaluateSchemaValidationLoopGuard(
-        toolLoopGuard,
-        interceptedToolCall,
-        compat.validation,
-      );
-      if (validationTermination) {
-        return { intercepted: false, skipConverter: true, terminate: validationTermination };
-      }
-      const termination = evaluateToolLoopGuard(toolLoopGuard, interceptedToolCall);
-      if (termination) {
-        return { intercepted: false, skipConverter: true, terminate: termination };
-      }
-      const reroutedWrite = tryRerouteEditToWrite(
-        interceptedToolCall,
-        compat.normalizedArgs,
-        allowedToolNames,
-        toolSchemaMap,
-      );
-      if (reroutedWrite) {
-        log.debug("Rerouting malformed edit call to write", {
-          path: reroutedWrite.path,
-          missing: compat.validation.missing,
-          typeErrors: compat.validation.typeErrors,
-        });
-        await onInterceptedToolCall(reroutedWrite.toolCall);
-        return {
-          intercepted: true,
-          skipConverter: true,
-        };
-      }
-      if (
-        schemaValidationFailureMode === "pass_through"
-        && shouldTerminateOnSchemaValidation(interceptedToolCall, compat.validation)
-      ) {
-        return {
-          intercepted: false,
-          skipConverter: true,
-          terminate: createSchemaValidationTermination(interceptedToolCall, compat.validation),
-        };
-      }
-      if (
-        schemaValidationFailureMode === "pass_through"
-        && shouldEmitNonFatalSchemaValidationHint(interceptedToolCall, compat.validation)
-      ) {
-        const hintChunk = createNonFatalSchemaValidationHintChunk(
-          responseMeta,
-          interceptedToolCall,
-          compat.validation,
-        );
-        log.debug("Emitting non-fatal schema validation hint and skipping malformed tool execution", {
-          tool: interceptedToolCall.function.name,
-          missing: compat.validation.missing,
-          typeErrors: compat.validation.typeErrors,
-        });
-        await onToolResult(hintChunk);
-        return {
-          intercepted: false,
-          skipConverter: true,
-        };
-      }
-      if (schemaValidationFailureMode === "terminate") {
-        return {
-          intercepted: false,
-          skipConverter: true,
-          terminate: createSchemaValidationTermination(interceptedToolCall, compat.validation),
-        };
-      }
-      log.debug("Forwarding schema-invalid tool call to OpenCode loop", {
-        tool: interceptedToolCall.function.name,
-        repairHint: compat.validation.repairHint,
-      });
-      await onInterceptedToolCall(interceptedToolCall);
+      await onInterceptedToolCall(reroutedWrite.toolCall);
       return {
         intercepted: true,
         skipConverter: true,
       };
     }
-
-    const termination = evaluateToolLoopGuard(toolLoopGuard, interceptedToolCall);
-    if (termination) {
-      return { intercepted: false, skipConverter: true, terminate: termination };
+    if (
+      schemaValidationFailureMode === "pass_through"
+      && shouldTerminateOnSchemaValidation(normalizedToolCall, compat.validation)
+    ) {
+      return {
+        intercepted: false,
+        skipConverter: true,
+        terminate: createSchemaValidationTermination(normalizedToolCall, compat.validation),
+      };
     }
-    await onInterceptedToolCall(interceptedToolCall);
-    return { intercepted: true, skipConverter: true };
+    if (
+      schemaValidationFailureMode === "pass_through"
+      && shouldEmitNonFatalSchemaValidationHint(normalizedToolCall, compat.validation)
+    ) {
+      const hintChunk = createNonFatalSchemaValidationHintChunk(
+        responseMeta,
+        normalizedToolCall,
+        compat.validation,
+      );
+      log.debug("Emitting non-fatal schema validation hint and skipping malformed tool execution", {
+        tool: normalizedToolCall.function.name,
+        missing: compat.validation.missing,
+        typeErrors: compat.validation.typeErrors,
+      });
+      await onToolResult(hintChunk);
+      return {
+        intercepted: false,
+        skipConverter: true,
+      };
+    }
+    if (schemaValidationFailureMode === "terminate") {
+      return {
+        intercepted: false,
+        skipConverter: true,
+        terminate: createSchemaValidationTermination(normalizedToolCall, compat.validation),
+      };
+    }
+    log.debug("Forwarding schema-invalid tool call to OpenCode loop", {
+      tool: normalizedToolCall.function.name,
+      repairHint: compat.validation.repairHint,
+    });
+    await onInterceptedToolCall(normalizedToolCall);
+    return {
+      intercepted: true,
+      skipConverter: true,
+    };
   }
 
-  const updates = await toolMapper.mapCursorEventToAcp(
-    event,
-    event.session_id ?? toolSessionId,
-  );
-
-  if (shouldEmitToolUpdates) {
-    for (const update of updates) {
-      await onToolUpdate(update);
-    }
+  const termination = evaluateToolLoopGuard(toolLoopGuard, normalizedToolCall);
+  if (termination) {
+    return { intercepted: false, skipConverter: true, terminate: termination };
   }
+  await onInterceptedToolCall(normalizedToolCall);
+  return { intercepted: true, skipConverter: true };
 
-  if (toolRouter && proxyExecuteToolCalls) {
-    const toolResult = await toolRouter.handleToolCall(event as any, responseMeta);
-    if (toolResult) {
-      await onToolResult(toolResult);
-    }
-  }
-
-  return {
-    intercepted: false,
-    skipConverter: suppressConverterToolEvents,
-  };
+  // This should never be reached due to the guards above, but TypeScript needs a return
+  return { intercepted: false, skipConverter: suppressConverterToolEvents };
 }
 
 export async function handleToolLoopEventWithFallback(

@@ -1,4 +1,4 @@
-import type { OpenAiToolCall, ToolLoopMeta } from "../proxy/tool-loop.js";
+import type { OpenAiToolCall, ToolLoopMeta, ToolCallExtractionResult } from "../proxy/tool-loop.js";
 import {
   createToolCallCompletionResponse,
   createToolCallStreamChunks,
@@ -46,7 +46,7 @@ export interface ProviderBoundary {
     event: StreamJsonToolCallEvent,
     allowedToolNames: Set<string>,
     toolLoopMode: ToolLoopMode,
-  ): OpenAiToolCall | null;
+  ): ToolCallExtractionResult;
   createNonStreamToolCallResponse(meta: ToolLoopMeta, toolCall: OpenAiToolCall): any;
   createStreamToolCallChunks(meta: ToolLoopMeta, toolCall: OpenAiToolCall): Array<any>;
 }
@@ -145,7 +145,7 @@ function createSharedBoundary(
 
     maybeExtractToolCall(event, allowedToolNames, toolLoopMode) {
       if (toolLoopMode !== "opencode") {
-        return null;
+        return { action: "skip" as const, skipReason: "tool_loop_mode_not_opencode" };
       }
       return extractOpenAiToolCall(event, allowedToolNames);
     },

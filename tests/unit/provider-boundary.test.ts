@@ -97,17 +97,18 @@ describe("provider boundary", () => {
       },
     };
 
-    const call = boundary.maybeExtractToolCall(event, new Set(["todowrite"]), "opencode");
-    expect(call?.function.name).toBe("todowrite");
+    const result = boundary.maybeExtractToolCall(event, new Set(["todowrite"]), "opencode");
+    expect(result.action).toBe("intercept");
+    expect(result.toolCall?.function.name).toBe("todowrite");
 
     const skipped = boundary.maybeExtractToolCall(event, new Set(["todowrite"]), "proxy-exec");
-    expect(skipped).toBeNull();
+    expect(skipped.action).toBe("skip");
 
     const meta = { id: "resp-1", created: 123, model: "auto" };
-    const nonStream = boundary.createNonStreamToolCallResponse(meta, call!);
+    const nonStream = boundary.createNonStreamToolCallResponse(meta, result.toolCall!);
     expect(nonStream.choices[0].finish_reason).toBe("tool_calls");
 
-    const stream = boundary.createStreamToolCallChunks(meta, call!);
+    const stream = boundary.createStreamToolCallChunks(meta, result.toolCall!);
     expect(stream).toHaveLength(2);
     expect(stream[1].choices[0].finish_reason).toBe("tool_calls");
   });
