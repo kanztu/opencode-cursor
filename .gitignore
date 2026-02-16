@@ -27,3 +27,4 @@ docs/plans/
 
 # Agent configuration (local only)
 AGENTS.md
+TOOL_SMOKE.md
