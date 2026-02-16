@@ -30,6 +30,19 @@ const UNKNOWN_AS_SUCCESS_TOOLS = new Set([
   "readlints",   // lint/diagnostic reader
 ]);
 
+// Exploratory tools that commonly iterate over many files/patterns.
+// These are exempt from COARSE fingerprint tracking (tool|errorClass) to allow
+// legitimate multi-file exploration. Strict fingerprints (tool|args|errorClass)
+// still apply to catch identical repeated failures.
+const EXPLORATION_TOOLS = new Set([
+  "read",
+  "grep",
+  "glob",
+  "ls",
+  "stat",
+  "semsearch",
+]);
+
 export interface ToolLoopGuardDecision {
   fingerprint: string;
   repeatCount: number;
@@ -131,6 +144,7 @@ export function createToolLoopGuard(
       const coarseFingerprint = `${toolCall.function.name}|${errorClass}`;
 
       return evaluateWithFingerprints(
+        toolCall.function.name,
         errorClass,
         strictFingerprint,
         coarseFingerprint,
@@ -146,6 +160,7 @@ export function createToolLoopGuard(
       const strictFingerprint = `${toolCall.function.name}|schema:${normalizedSignature}|validation`;
       const coarseFingerprint = `${toolCall.function.name}|validation`;
       return evaluateWithFingerprints(
+        toolCall.function.name,
         "validation",
         strictFingerprint,
         coarseFingerprint,
@@ -462,6 +477,7 @@ function normalizeValidationSignature(signature: string): string {
 }
 
 function evaluateWithFingerprints(
+  toolName: string,
   errorClass: ToolLoopErrorClass,
   strictFingerprint: string,
   coarseFingerprint: string,
@@ -483,9 +499,22 @@ function evaluateWithFingerprints(
 
   const strictRepeatCount = (strictCounts.get(strictFingerprint) ?? 0) + 1;
   strictCounts.set(strictFingerprint, strictRepeatCount);
+  const strictTriggered = strictRepeatCount > maxRepeat;
+
+  const isExplorationTool = EXPLORATION_TOOLS.has(toolName.toLowerCase());
+  if (isExplorationTool) {
+    return {
+      fingerprint: strictFingerprint,
+      repeatCount: strictRepeatCount,
+      maxRepeat,
+      errorClass,
+      triggered: strictTriggered,
+      tracked: true,
+    };
+  }
+
   const coarseRepeatCount = (coarseCounts.get(coarseFingerprint) ?? 0) + 1;
   coarseCounts.set(coarseFingerprint, coarseRepeatCount);
-  const strictTriggered = strictRepeatCount > maxRepeat;
   const coarseTriggered = coarseRepeatCount > coarseMaxRepeat;
   const preferCoarseFingerprint = coarseTriggered && !strictTriggered;
   return {
