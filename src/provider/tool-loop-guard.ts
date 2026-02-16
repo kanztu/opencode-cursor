@@ -10,6 +10,7 @@ type ToolLoopErrorClass =
   | "unknown";
 
 const UNKNOWN_AS_SUCCESS_TOOLS = new Set([
+  // Core filesystem tools
   "bash",
   "shell",
   "read",
@@ -19,9 +20,14 @@ const UNKNOWN_AS_SUCCESS_TOOLS = new Set([
   "ls",
   "glob",
   "stat",
-  "webfetch",
   "mkdir",
   "rm",
+  // Web/network tools
+  "webfetch",
+  // cursor-agent specific tools (passthrough, but should not trigger loop guard)
+  // Discovered via tests/experiments/ harness - see docs/cursor-agent-tools.md
+  "semsearch",   // semantic code search
+  "readlints",   // lint/diagnostic reader
 ]);
 
 export interface ToolLoopGuardDecision {
