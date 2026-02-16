@@ -147,13 +147,20 @@ Default mode: `CURSOR_ACP_TOOL_LOOP_MODE=opencode`. Legacy `proxy-exec` still av
 
 ## Roadmap
 
-**Phase 1 — Stabilise** *(in progress)*: Clean up dead code, fix test isolation, activate dormant ACP modules.
+🟡 **Stabilise** — Clean up dead code, fix test isolation  
+🔴 **MCP Server** — Expose OpenCode tools via stdio transport  
+🔴 **Simplify** — Rip out serialisation layers  
+🔴 **ACP + MCP** — Structured protocols end-to-end
 
-**Phase 2 — MCP Server**: Expose OpenCode's tools as an MCP server. cursor-agent discovers and calls them directly via `stdio` transport — no more text-embedded tool definitions.
-
-**Phase 3 — Simplify**: With tools on MCP, rip out prompt-builder serialisation, the alias table, and most of the SSE interception layer. Plugin becomes a conversation relay.
-
-**Phase 4 — Full ACP + MCP**: Formalise the agent boundary. SessionManager, MetricsTracker, and ToolMapper all active. Plugin is a thin ACP relay; tools flow through MCP.
+```mermaid
+flowchart LR
+    P1[/"🟡 Stabilise"/] --> P2[/"🔴 MCP Server"/] --> P3[/"🔴 Simplify"/] --> P4[/"🔴 ACP + MCP"/]
+    
+    style P1 fill:#2d6a4f,stroke:#1b4332,color:#fff
+    style P2 fill:#495057,stroke:#343a40,color:#adb5bd
+    style P3 fill:#495057,stroke:#343a40,color:#adb5bd
+    style P4 fill:#495057,stroke:#343a40,color:#adb5bd
+```
 
 ## Alternatives
 
