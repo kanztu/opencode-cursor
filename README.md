@@ -20,7 +20,8 @@ Optional: [Bun](https://bun.sh/) (Options B-F), [Go 1.21+](https://go.dev/) (Opt
 curl -fsSL https://raw.githubusercontent.com/Nomadcxx/opencode-cursor/main/install.sh | bash
 ```
 
-### Option B — Add to opencode.json
+<details>
+<summary><b>Option B</b> — Add to opencode.json</summary>
 
 Add to `~/.config/opencode/opencode.json`:
 
@@ -72,8 +73,10 @@ Add to `~/.config/opencode/opencode.json`:
 ```
 
 > Update models anytime: `cursor-agent models`
+</details>
 
-### Option C — npm global + CLI
+<details>
+<summary><b>Option C</b> — npm global + CLI</summary>
 
 ```bash
 npm install -g @rama_nigg/open-cursor
@@ -81,14 +84,17 @@ open-cursor install
 ```
 
 Upgrade: `npm update -g @rama_nigg/open-cursor`
+</details>
 
-### Option D — Go TUI installer
+<details>
+<summary><b>Option D</b> — Go TUI installer</summary>
 
 ```bash
 git clone https://github.com/Nomadcxx/opencode-cursor.git
 cd opencode-cursor
 go build -o ./installer ./cmd/installer && ./installer
 ```
+</details>
 
 ### Option E — LLM paste
 
@@ -96,7 +102,8 @@ go build -o ./installer ./cmd/installer && ./installer
 Install open-cursor for OpenCode: edit ~/.config/opencode/opencode.json, add "@rama_nigg/open-cursor@latest" to "plugin", add a "cursor-acp" provider with npm "@ai-sdk/openai-compatible" and models from `cursor-agent models` prefixed with "cursor-acp/". Auth: `cursor-agent login`. Verify: `opencode models | grep cursor-acp`.
 ```
 
-### Option F — Manual (from source)
+<details>
+<summary><b>Option F</b> — Manual (from source)</summary>
 
 ```bash
 git clone https://github.com/Nomadcxx/opencode-cursor.git && cd opencode-cursor
@@ -106,6 +113,7 @@ ln -sf $(pwd)/dist/plugin-entry.js ~/.config/opencode/plugin/cursor-acp.js
 ```
 
 Add `"cursor-acp"` to the `plugin` array and reuse the provider block from Option B.
+</details>
 
 ## Authentication
 
@@ -147,20 +155,20 @@ Default mode: `CURSOR_ACP_TOOL_LOOP_MODE=opencode`. Legacy `proxy-exec` still av
 
 ## Roadmap
 
-🟡 **Stabilise** — Clean up dead code, fix test isolation  
-🔴 **MCP Server** — Expose OpenCode tools via stdio transport  
-🔴 **Simplify** — Rip out serialisation layers  
-🔴 **ACP + MCP** — Structured protocols end-to-end
-
 ```mermaid
 flowchart LR
-    P1[/"🟡 Stabilise"/] --> P2[/"🔴 MCP Server"/] --> P3[/"🔴 Simplify"/] --> P4[/"🔴 ACP + MCP"/]
+    P1[/Stabilise/] --> P2[/MCP Server/] --> P3[/Simplify/] --> P4[/ACP + MCP/]
     
-    style P1 fill:#2d6a4f,stroke:#1b4332,color:#fff
-    style P2 fill:#495057,stroke:#343a40,color:#adb5bd
+    style P1 fill:#264653,stroke:#1d3557,color:#fff
+    style P2 fill:#264653,stroke:#1d3557,color:#fff
     style P3 fill:#495057,stroke:#343a40,color:#adb5bd
     style P4 fill:#495057,stroke:#343a40,color:#adb5bd
 ```
+
+[X] **Stabilise** — Clean up dead code, fix test isolation  
+[ ] **MCP Server** — Expose OpenCode tools via stdio transport  
+[ ] **Simplify** — Rip out serialisation layers  
+[ ] **ACP + MCP** — Structured protocols end-to-end
 
 ## Alternatives
 
