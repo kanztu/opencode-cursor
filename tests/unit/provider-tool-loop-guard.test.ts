@@ -90,12 +90,13 @@ describe("tool loop guard", () => {
       2,
     );
 
+    // Use 'edit' instead of 'read' - exploration tools have 5x limit multiplier
     const call = {
       id: "c1",
       type: "function",
       function: {
-        name: "read",
-        arguments: JSON.stringify({ path: "foo.txt" }),
+        name: "edit",
+        arguments: JSON.stringify({ path: "foo.txt", content: "bar" }),
       },
     } as const;
 
@@ -576,3 +577,67 @@ describe("tool loop guard", () => {
     expect(readDecision.triggered).toBe(true);
   });
 });
+
+  // Reproduction test for issue #33: cross-turn accumulation
+  it("ISSUE_33: should not trigger on exploration tool reads across turns", () => {
+    // Simulate: user asks agent to read file A in turn 1, turn 3, turn 5, turn 7, turn 9
+    // This is legitimate behavior - re-reading a file to verify changes is normal
+    const history = [];
+    
+    // Build 8 historical turns where agent read the same file (with success)
+    for (let turn = 1; turn <= 8; turn++) {
+      history.push({
+        role: "assistant",
+        content: null,
+        tool_calls: [
+          {
+            id: `read-turn-${turn}`,
+            type: "function",
+            function: {
+              name: "read",
+              arguments: JSON.stringify({ path: "src/important-file.ts" }),
+            },
+          },
+        ],
+      });
+      history.push({
+        role: "tool",
+        tool_call_id: `read-turn-${turn}`,
+        content: "export function foo() { return 42; }",
+      });
+      // User message between turns (simulating conversation flow)
+      if (turn < 8) {
+        history.push({
+          role: "user", 
+          content: `Turn ${turn + 1}: Please check the file again`,
+        });
+      }
+    }
+
+    const guard = createToolLoopGuard(history, 2);
+
+    // Now agent reads the same file again in current turn (turn 9)
+    const decision = guard.evaluate({
+      id: "read-turn-9",
+      type: "function",
+      function: {
+        name: "read",
+        arguments: JSON.stringify({ path: "src/important-file.ts" }),
+      },
+    });
+
+    // CURRENT BEHAVIOR (BUG): This triggers because count = 9 > limit 2
+    // EXPECTED BEHAVIOR: Should NOT trigger - reading same file across turns is legitimate
+    console.log("Issue #33 reproduction:", {
+      triggered: decision.triggered,
+      repeatCount: decision.repeatCount,
+      maxRepeat: decision.maxRepeat,
+      fingerprint: decision.fingerprint,
+    });
+    
+    // This test documents current (buggy) behavior
+    // When fixed, change expect to: expect(decision.triggered).toBe(false);
+    expect(decision.triggered).toBe(false); // FIXED: exploration tools get 5x limit
+    expect(decision.repeatCount).toBe(9);  // 8 historical + 1 current
+    expect(decision.maxRepeat).toBe(10);   // 2 * 5 (EXPLORATION_LIMIT_MULTIPLIER)
+  });

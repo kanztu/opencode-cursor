@@ -75,6 +75,7 @@ export function parseToolLoopMaxRepeat(
 // to allow legitimate exploration across different files/targets while still
 // catching spray-and-pray patterns.
 const COARSE_LIMIT_MULTIPLIER = 3;
+const EXPLORATION_LIMIT_MULTIPLIER = 5;
 
 export function createToolLoopGuard(
   messages: Array<unknown>,
@@ -113,6 +114,16 @@ export function createToolLoopGuard(
         const repeatCount = (counts.get(successFingerprint) ?? 0) + 1;
         counts.set(successFingerprint, repeatCount);
 
+        // Exploration tools (read, grep, glob, etc.) get a higher limit because
+        // re-reading the same file across turns is legitimate behavior (verifying
+        // edits, checking state, etc.). Use 5x multiplier for these tools.
+        const isExplorationTool = EXPLORATION_TOOLS.has(
+          toolCall.function.name.toLowerCase(),
+        );
+        const effectiveMaxRepeat = isExplorationTool
+          ? maxRepeat * EXPLORATION_LIMIT_MULTIPLIER
+          : maxRepeat;
+
         // Some tools (notably edit/write) can get stuck in "successful" loops where
         // the model keeps re-issuing the same operation with slightly different
         // content (e.g. trailing newline differences). Track a coarse signature for
@@ -129,14 +140,14 @@ export function createToolLoopGuard(
           coarseCounts.set(coarseSuccessFingerprint, coarseRepeatCount);
         }
         const coarseTriggered = coarseSuccessFingerprint
-          ? coarseRepeatCount > maxRepeat
+          ? coarseRepeatCount > effectiveMaxRepeat
           : false;
         return {
           fingerprint: coarseTriggered ? coarseSuccessFingerprint! : successFingerprint,
           repeatCount: coarseTriggered ? coarseRepeatCount : repeatCount,
-          maxRepeat,
+          maxRepeat: effectiveMaxRepeat,
           errorClass,
-          triggered: repeatCount > maxRepeat || coarseTriggered,
+          triggered: repeatCount > effectiveMaxRepeat || coarseTriggered,
           tracked: true,
         };
       }
