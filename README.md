@@ -7,11 +7,6 @@
 
 No prompt limits. No broken streams. Full thinking + tool support in OpenCode. Your Cursor subscription, properly integrated.
 
-## Prerequisites
-
-Required: [OpenCode](https://opencode.ai/) + [cursor-agent](https://cursor.com/) (`curl -fsSL https://cursor.com/install | bash && cursor-agent login`)
-Optional: [Bun](https://bun.sh/) (Options B-F), [Go 1.21+](https://go.dev/) (Option D)
-
 ## Installation
 
 ### Option A — One-line installer
@@ -96,11 +91,13 @@ go build -o ./installer ./cmd/installer && ./installer
 ```
 </details>
 
-### Option E — LLM paste
+<details>
+<summary><b>Option E</b> — LLM paste</summary>
 
 ```
 Install open-cursor for OpenCode: edit ~/.config/opencode/opencode.json, add "@rama_nigg/open-cursor@latest" to "plugin", add a "cursor-acp" provider with npm "@ai-sdk/openai-compatible" and models from `cursor-agent models` prefixed with "cursor-acp/". Auth: `cursor-agent login`. Verify: `opencode models | grep cursor-acp`.
 ```
+</details>
 
 <details>
 <summary><b>Option F</b> — Manual (from source)</summary>
@@ -153,23 +150,6 @@ flowchart TB
 
 Default mode: `CURSOR_ACP_TOOL_LOOP_MODE=opencode`. Legacy `proxy-exec` still available. Details: [docs/architecture/runtime-tool-loop.md](docs/architecture/runtime-tool-loop.md).
 
-## Roadmap
-
-```mermaid
-flowchart LR
-    P1[/Stabilise/] --> P2[/MCP Server/] --> P3[/Simplify/] --> P4[/ACP + MCP/]
-    
-    style P1 fill:#264653,stroke:#1d3557,color:#fff
-    style P2 fill:#264653,stroke:#1d3557,color:#fff
-    style P3 fill:#495057,stroke:#343a40,color:#adb5bd
-    style P4 fill:#495057,stroke:#343a40,color:#adb5bd
-```
-
-[X] **Stabilise** — Clean up dead code, fix test isolation  
-[ ] **MCP Server** — Expose OpenCode tools via stdio transport  
-[ ] **Simplify** — Rip out serialisation layers  
-[ ] **ACP + MCP** — Structured protocols end-to-end
-
 ## Alternatives
 
 |                   |        open-cursor         | [yet-another-opencode-cursor-auth](https://github.com/Yukaii/yet-another-opencode-cursor-auth) | [opencode-cursor-auth](https://github.com/POSO-PocketSolutions/opencode-cursor-auth) | [cursor-opencode-auth](https://github.com/R44VC0RP/cursor-opencode-auth) |
@@ -194,6 +174,23 @@ flowchart LR
 - Auth failed → `CURSOR_ACP_LOG_LEVEL=debug opencode auth login cursor-acp`
 
 Debug logging: `CURSOR_ACP_LOG_LEVEL=debug opencode run "your prompt" --model cursor-acp/auto`
+
+## Roadmap
+
+```mermaid
+flowchart LR
+    P1[/Stabilise/] --> P2[/MCP Server/] --> P3[/Simplify/] --> P4[/ACP + MCP/]
+    
+    style P1 fill:#264653,stroke:#1d3557,color:#fff
+    style P2 fill:#264653,stroke:#1d3557,color:#fff
+    style P3 fill:#495057,stroke:#343a40,color:#adb5bd
+    style P4 fill:#495057,stroke:#343a40,color:#adb5bd
+```
+
+[X] **Stabilise** — Clean up dead code, fix test isolation  
+[ ] **MCP Server** — Expose OpenCode tools via stdio transport  
+[ ] **Simplify** — Rip out serialisation layers  
+[ ] **ACP + MCP** — Structured protocols end-to-end
 
 ## License
 
