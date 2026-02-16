@@ -147,24 +147,7 @@ Default mode: `CURSOR_ACP_TOOL_LOOP_MODE=opencode`. Legacy `proxy-exec` still av
 
 ## Roadmap
 
-Right now, cursor-agent and OpenCode don't speak the same tool protocol — so we translate everything through text serialisation, SSE interception, and ~50 tool name aliases. It works, but it's fragile. The goal is structured protocols end-to-end.
-
-```mermaid
-graph LR
-    P1["🔧 Phase 1\nStabilise"]
-    P2["🔌 Phase 2\nMCP Server"]
-    P3["✂️ Phase 3\nSimplify"]
-    P4["🏗️ Phase 4\nACP + MCP"]
-
-    P1 -->|current| P2 --> P3 --> P4
-
-    style P1 fill:#2d6a4f,stroke:#1b4332,color:#fff
-    style P2 fill:#264653,stroke:#1d3557,color:#fff
-    style P3 fill:#495057,stroke:#343a40,color:#adb5bd
-    style P4 fill:#495057,stroke:#343a40,color:#adb5bd
-```
-
-**Phase 1 — Stabilise** *(in progress)*: Clean up dead code, fix test isolation, activate dormant ACP modules. Core bugs squashed (plugin crash, tool loop inflation, MCP passthrough).
+**Phase 1 — Stabilise** *(in progress)*: Clean up dead code, fix test isolation, activate dormant ACP modules.
 
 **Phase 2 — MCP Server**: Expose OpenCode's tools as an MCP server. cursor-agent discovers and calls them directly via `stdio` transport — no more text-embedded tool definitions.
 
