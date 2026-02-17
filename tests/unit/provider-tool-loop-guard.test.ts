@@ -206,6 +206,7 @@ describe("tool loop guard", () => {
   });
 
   it("treats unknown bash output as success for loop tracking", () => {
+    // bash is in EXPLORATION_TOOLS with 5x multiplier, so maxRepeat=1 => effective limit=5
     const guard = createToolLoopGuard(
       [
         {
@@ -225,7 +226,27 @@ describe("tool loop guard", () => {
         arguments: JSON.stringify({ command: "printf bash-ok" }),
       },
     });
-    const second = guard.evaluate({
+
+    // bash is in UNKNOWN_AS_SUCCESS_TOOLS, so "bash-ok" (unknown) becomes "success"
+    expect(first.errorClass).toBe("success");
+    expect(first.triggered).toBe(false);
+
+    // With 5x exploration multiplier and maxRepeat=1, effective limit is 5
+    // Calls 2-5 should NOT trigger
+    for (let i = 2; i <= 5; i++) {
+      const decision = guard.evaluate({
+        id: "bash-1",
+        type: "function",
+        function: {
+          name: "bash",
+          arguments: JSON.stringify({ command: "printf bash-ok" }),
+        },
+      });
+      expect(decision.triggered).toBe(false);
+    }
+
+    // 6th call should trigger
+    const sixth = guard.evaluate({
       id: "bash-1",
       type: "function",
       function: {
@@ -233,10 +254,7 @@ describe("tool loop guard", () => {
         arguments: JSON.stringify({ command: "printf bash-ok" }),
       },
     });
-
-    expect(first.errorClass).toBe("success");
-    expect(first.triggered).toBe(false);
-    expect(second.triggered).toBe(true);
+    expect(sixth.triggered).toBe(true);
   });
 
   it("seeds success-loop history across requests for identical successful calls", () => {

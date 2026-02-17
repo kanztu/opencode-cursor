@@ -41,6 +41,8 @@ const EXPLORATION_TOOLS = new Set([
   "ls",
   "stat",
   "semsearch",
+  "bash",
+  "shell",
 ]);
 
 export interface ToolLoopGuardDecision {
