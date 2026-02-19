@@ -217,7 +217,7 @@ export function runDoctorChecks(configPath: string, pluginPath: string): CheckRe
   ];
 }
 
-type Command = "install" | "sync-models" | "uninstall" | "status" | "doctor" | "help";
+type Command = "install" | "sync-models" | "uninstall" | "status" | "doctor" | "serve" | "help";
 
 type Options = {
   config?: string;
@@ -227,6 +227,7 @@ type Options = {
   skipModels?: boolean;
   noBackup?: boolean;
   json?: boolean;
+  workspace?: string;
 };
 
 const PROVIDER_ID = "cursor-acp";
@@ -243,6 +244,7 @@ Commands:
   sync-models Refresh model list from cursor-agent
   status      Show current configuration state
   doctor      Diagnose common issues
+  serve       Start the OpenAI-compatible API proxy (default port 32124)
   uninstall   Remove cursor-acp from OpenCode config
   help        Show this help message
 
@@ -254,6 +256,7 @@ Options:
   --skip-models         Skip model sync during install
   --no-backup           Don't create config backup
   --json                Output in JSON format (status command only)
+  --workspace <path>    Workspace directory for serve (default: cwd)
 `);
 }
 
@@ -279,6 +282,9 @@ function parseArgs(argv: string[]): { command: Command; options: Options } {
     } else if (arg === "--base-url" && rest[i + 1]) {
       options.baseUrl = rest[i + 1];
       i += 1;
+    } else if (arg === "--workspace" && rest[i + 1]) {
+      options.workspace = rest[i + 1];
+      i += 1;
     } else if (arg === "--json") {
       options.json = true;
     } else {
@@ -296,6 +302,7 @@ function normalizeCommand(value: string | undefined): Command {
     case "uninstall":
     case "status":
     case "doctor":
+    case "serve":
     case "help":
       return value ? (value.toLowerCase() as Command) : "help";
     default:
@@ -618,6 +625,25 @@ function commandDoctor(options: Options) {
   }
 }
 
+async function commandServe(options: Options) {
+  const workspaceDir = resolve(options.workspace || process.cwd());
+  const { ensureCursorProxyServer } = await import("../plugin.js");
+  const baseURL = await ensureCursorProxyServer(workspaceDir);
+  console.log(getBrandingHeader());
+  console.log("OpenAI-compatible API proxy is running.");
+  console.log("");
+  console.log(`  Base URL:  ${baseURL}`);
+  console.log(`  Health:   ${baseURL.replace("/v1", "")}/health`);
+  console.log(`  Models:   GET ${baseURL}/models`);
+  console.log(`  Chat:     POST ${baseURL}/chat/completions`);
+  console.log("");
+  console.log("Press Ctrl+C to stop.");
+  await new Promise<void>((_, reject) => {
+    process.on("SIGINT", () => reject(new Error("SIGINT")));
+    process.on("SIGTERM", () => reject(new Error("SIGTERM")));
+  }).catch(() => {});
+}
+
 function main() {
   let parsed: { command: Command; options: Options };
   try {
@@ -630,32 +656,37 @@ function main() {
     return;
   }
 
-  try {
-    switch (parsed.command) {
-      case "install":
-        commandInstall(parsed.options);
-        return;
-      case "sync-models":
-        commandSyncModels(parsed.options);
-        return;
-      case "uninstall":
-        commandUninstall(parsed.options);
-        return;
-      case "status":
-        commandStatus(parsed.options);
-        return;
-      case "doctor":
-        commandDoctor(parsed.options);
-        return;
-      case "help":
-        printHelp();
-        return;
+  (async () => {
+    try {
+      switch (parsed.command) {
+        case "install":
+          commandInstall(parsed.options);
+          return;
+        case "sync-models":
+          commandSyncModels(parsed.options);
+          return;
+        case "uninstall":
+          commandUninstall(parsed.options);
+          return;
+        case "status":
+          commandStatus(parsed.options);
+          return;
+        case "doctor":
+          commandDoctor(parsed.options);
+          return;
+        case "serve":
+          await commandServe(parsed.options);
+          return;
+        case "help":
+          printHelp();
+          return;
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(`Error: ${message}`);
+      process.exit(1);
     }
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error(`Error: ${message}`);
-    process.exit(1);
-  }
+  })();
 }
 
 main();

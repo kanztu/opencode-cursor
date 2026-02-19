@@ -129,6 +129,96 @@ opencode run "your prompt" --model cursor-acp/auto
 opencode run "your prompt" --model cursor-acp/sonnet-4.5
 ```
 
+### Starting the API endpoint (standalone)
+
+To run the OpenAI-compatible HTTP proxy on its own (e.g. for other clients or scripts):
+
+```bash
+open-cursor serve
+```
+
+Optional: use a specific workspace directory (default is current directory):
+
+```bash
+open-cursor serve --workspace /path/to/project
+```
+
+The proxy listens on **http://127.0.0.1:32124** (or the next free port in 32124–32279). Endpoints:
+
+- **GET** `http://127.0.0.1:32124/health` — health check
+- **GET** `http://127.0.0.1:32124/v1/models` — list models
+- **POST** `http://127.0.0.1:32124/v1/chat/completions` — chat (OpenAI request/response format)
+
+You can point any OpenAI-compatible client at `baseURL: "http://127.0.0.1:32124/v1"`. Ensure `cursor-agent login` has been run so the proxy can call the Cursor API.
+
+**Docker:** To run the API in a container (e.g. for GitHub Actions or a server), see [docs/docker.md](docs/docker.md). You’ll need a Cursor API secret: either `CURSOR_API_KEY` or `CURSOR_CLI_CONFIG_JSON` (contents of the auth file from `cursor-agent login`).
+
+### Run and test locally
+
+**1. Prerequisites**
+
+- [Bun](https://bun.sh) — `curl -fsSL https://bun.sh/install | bash`
+- [Cursor CLI (cursor-agent)](https://cursor.com/docs/cli) — `curl -fsSL https://cursor.com/install | bash`
+
+**2. Clone, install, build**
+
+```bash
+git clone https://github.com/kanztu/opencode-cursor.git   # or your fork
+cd opencode-cursor
+bun install
+bun run build
+```
+
+**3. Log in to Cursor (once)**
+
+```bash
+cursor-agent login
+```
+
+Complete the browser flow so `~/.config/cursor/cli-config.json` (or `~/.cursor/cli-config.json` on macOS) exists.
+
+**4. Start the API proxy**
+
+```bash
+node dist/cli/opencode-cursor.js serve
+# or: bun run --bun dist/cli/opencode-cursor.js serve
+```
+
+You should see something like:
+
+```
+Base URL:  http://127.0.0.1:32124/v1
+Health:   http://127.0.0.1:32124/health
+Models:   GET http://127.0.0.1:32124/v1/models
+Chat:     POST http://127.0.0.1:32124/v1/chat/completions
+```
+
+**5. Test with curl**
+
+In another terminal:
+
+```bash
+# Health
+curl -s http://127.0.0.1:32124/health | jq .
+
+# List models
+curl -s http://127.0.0.1:32124/v1/models | jq .
+
+# Chat (non-streaming) — replace model if needed
+curl -s http://127.0.0.1:32124/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"model":"auto","messages":[{"role":"user","content":"Say hello in one sentence."}],"stream":false}' \
+  | jq .
+```
+
+For streaming, use `"stream": true` and you’ll get SSE; omit `| jq .` to see raw events.
+
+**Run unit tests**
+
+```bash
+bun test tests/unit
+```
+
 ## Architecture
 
 ```mermaid

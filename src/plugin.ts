@@ -473,7 +473,7 @@ async function findFirstAllowedToolCallInOutput(
   return { toolCall: null, terminationMessage: null };
 }
 
-async function ensureCursorProxyServer(workspaceDirectory: string, toolRouter?: ToolRouter): Promise<string> {
+export async function ensureCursorProxyServer(workspaceDirectory: string, toolRouter?: ToolRouter): Promise<string> {
   const key = getGlobalKey();
   const g = globalThis as any;
   const normalizedWorkspace = normalizeWorkspaceForCompare(workspaceDirectory);
