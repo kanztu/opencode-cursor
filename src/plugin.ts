@@ -66,6 +66,9 @@ function ensureDebugLogDir(): void {
 }
 
 function debugLogToFile(message: string, data: any): void {
+  if (process.env.CURSOR_ACP_DEBUG_TOOL_LOOP !== "1" && process.env.CURSOR_ACP_DEBUG_TOOL_LOOP !== "true") {
+    return;
+  }
   try {
     ensureDebugLogDir();
     const timestamp = new Date().toISOString();

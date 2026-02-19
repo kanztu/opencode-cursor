@@ -639,9 +639,14 @@ async function commandServe(options: Options) {
   console.log("");
   console.log("Press Ctrl+C to stop.");
   await new Promise<void>((_, reject) => {
-    process.on("SIGINT", () => reject(new Error("SIGINT")));
-    process.on("SIGTERM", () => reject(new Error("SIGTERM")));
-  }).catch(() => {});
+    const shutdown = () => {
+      process.exit(0);
+    };
+    process.on("SIGINT", shutdown);
+    process.on("SIGTERM", shutdown);
+  }).catch(() => {
+    process.exit(0);
+  });
 }
 
 function main() {

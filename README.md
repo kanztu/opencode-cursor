@@ -219,6 +219,16 @@ For streaming, use `"stream": true` and you’ll get SSE; omit `| jq .` to see r
 bun test tests/unit
 ```
 
+### Speed / performance
+
+- **Run with Bun** so the proxy uses Bun’s runtime and `Bun.spawn` (faster than Node for spawning cursor-agent):
+  ```bash
+  bun run dist/cli/opencode-cursor.js serve
+  ```
+- **Use `"stream": true`** so the client gets tokens as they arrive (better time-to-first-token).
+- **Debug file logging** is off by default. It only runs when `CURSOR_ACP_DEBUG_TOOL_LOOP=1` (or `true`), so normal requests don’t pay for sync file I/O.
+- **Main bottleneck:** each request starts a new `cursor-agent` process and hits the Cursor API. The proxy does not keep a long-lived agent; speeding that up would require cursor-agent to support a persistent/session mode.
+
 ## Architecture
 
 ```mermaid

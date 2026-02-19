@@ -20,13 +20,15 @@ function ensureLogDir(): void {
 }
 
 function debugLogToFile(message: string, data: any): void {
+  if (process.env.CURSOR_ACP_DEBUG_TOOL_LOOP !== "1" && process.env.CURSOR_ACP_DEBUG_TOOL_LOOP !== "true") {
+    return;
+  }
   try {
     ensureLogDir();
     const timestamp = new Date().toISOString();
     const logLine = `[${timestamp}] ${message}: ${JSON.stringify(data, null, 2)}\n`;
     appendFileSync(DEBUG_LOG_FILE, logLine);
   } catch (err) {
-    // Fall back to regular debug log if file writing fails
     log.debug(message, data);
   }
 }
